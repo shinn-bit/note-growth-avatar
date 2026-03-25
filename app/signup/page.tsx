@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../styles/auth.module.css";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,18 +17,20 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    const res = await fetch("/api/cognito/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
+    const data = await res.json();
     setLoading(false);
 
-    if (result?.error) {
-      setError("メールアドレスまたはパスワードが正しくありません");
+    if (!res.ok) {
+      setError(data.error || "登録に失敗しました");
     } else {
-      router.push("/");
+      // メール確認画面へ、emailをクエリで渡す
+      router.push(`/signup/verify?email=${encodeURIComponent(email)}`);
     }
   };
 
@@ -37,8 +38,8 @@ export default function LoginPage() {
     <main className={styles.container}>
       <div className={styles.header}>
         <span className={styles.avatar}>🥚</span>
-        <h1 className={styles.title}>note継続アプリ</h1>
-        <p className={styles.subtitle}>ログインして続きから始めよう</p>
+        <h1 className={styles.title}>新規登録</h1>
+        <p className={styles.subtitle}>アカウントを作成してアバターを育てよう</p>
       </div>
 
       <form className={styles.card} onSubmit={handleSubmit}>
@@ -65,18 +66,19 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={8}
           />
         </div>
 
         <button className={styles.button} type="submit" disabled={loading}>
-          {loading ? "ログイン中..." : "ログイン"}
+          {loading ? "登録中..." : "登録する"}
         </button>
       </form>
 
       <p className={styles.footer}>
-        アカウントをお持ちでない方は{" "}
-        <Link href="/signup" className={styles.link}>
-          新規登録
+        すでにアカウントをお持ちの方は{" "}
+        <Link href="/login" className={styles.link}>
+          ログイン
         </Link>
       </p>
     </main>
