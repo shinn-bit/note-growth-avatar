@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getDeviceId } from "./lib/deviceId";
 
 type AvatarState = {
   streak: number;
@@ -67,16 +68,22 @@ function HpBar({ hp }: { hp: number }) {
 }
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [state, setState] = useState<AvatarState | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const deviceId = getDeviceId();
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
     const saved = localStorage.getItem("note_avatar_state");
     if (saved) {
       setState(JSON.parse(saved));
     } else {
-      // デフォルト初期状態
       setState({
         streak: 0,
         avatarHp: 50,
@@ -85,10 +92,9 @@ export default function HomePage() {
         formStage: 0,
       });
     }
-    setLoading(false);
-  }, []);
+  }, [status]);
 
-  if (loading) {
+  if (status === "loading" || !state) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-400">読み込み中...</p>
@@ -96,11 +102,19 @@ export default function HomePage() {
     );
   }
 
-  const s = state!;
+  const s = state;
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-12 gap-8">
-      <h1 className="text-2xl font-bold text-gray-800">note 継続アバター</h1>
+      <div className="w-full max-w-xs flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">note継続アプリ</h1>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-sm text-gray-400 hover:text-gray-600"
+        >
+          ログアウト
+        </button>
+      </div>
 
       {/* アバター */}
       <AvatarDisplay hp={s.avatarHp} formStage={s.formStage} />
