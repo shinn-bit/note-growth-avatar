@@ -13,8 +13,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "note 継続アバター",
+  title: "note継続アプリ",
   description: "投稿するたびに自分の分身が成長するnote継続アプリ",
+  openGraph: {
+    title: "note継続アプリ",
+    description: "投稿するたびに自分の分身が成長するnote継続アプリ",
+    url: "https://note-growth-avatar.vercel.app",
+    siteName: "note継続アプリ",
+    images: [
+      {
+        url: "/ogp/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "note継続アプリ",
+      },
+    ],
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "note継続アプリ",
+    description: "投稿するたびに自分の分身が成長するnote継続アプリ",
+    images: ["/ogp/og-image.png"],
+  },
+  icons: {
+    icon: "/icons/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
