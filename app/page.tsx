@@ -5,6 +5,8 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 type AvatarState = {
   streak: number;
   avatarHp: number;
@@ -71,6 +73,7 @@ export default function HomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [state, setState] = useState<AvatarState | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -79,22 +82,28 @@ export default function HomePage() {
   }, [status, router]);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-    const saved = localStorage.getItem("note_avatar_state");
-    if (saved) {
-      setState(JSON.parse(saved));
-    } else {
-      setState({
-        streak: 0,
-        avatarHp: 50,
-        avatarLevel: 0,
-        avatarDamage: 0,
-        formStage: 0,
-      });
-    }
-  }, [status]);
+    if (status !== "authenticated" || !session?.accessToken) return;
 
-  if (status === "loading" || !state) {
+    const fetchState = async () => {
+      try {
+        const res = await fetch(`${API_URL}/state`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        if (res.ok) {
+          setState(await res.json());
+        }
+      } catch {
+        // 取得失敗時はデフォルト値
+        setState({ streak: 0, avatarHp: 50, avatarLevel: 0, avatarDamage: 0, formStage: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchState();
+  }, [status, session]);
+
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-400">読み込み中...</p>
@@ -102,7 +111,7 @@ export default function HomePage() {
     );
   }
 
-  const s = state;
+  if (!state) return null;
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-12 gap-8">
@@ -116,31 +125,27 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* アバター */}
-      <AvatarDisplay hp={s.avatarHp} formStage={s.formStage} />
+      <AvatarDisplay hp={state.avatarHp} formStage={state.formStage} />
 
-      {/* HP バー */}
       <div className="w-full max-w-xs">
-        <HpBar hp={s.avatarHp} />
+        <HpBar hp={state.avatarHp} />
       </div>
 
-      {/* ステータス */}
       <div className="w-full max-w-xs grid grid-cols-3 gap-3 text-center">
         <div className="bg-white rounded-xl p-3 shadow-sm">
-          <p className="text-2xl font-bold text-gray-800">{s.streak}</p>
+          <p className="text-2xl font-bold text-gray-800">{state.streak}</p>
           <p className="text-xs text-gray-500 mt-1">連続日数</p>
         </div>
         <div className="bg-white rounded-xl p-3 shadow-sm">
-          <p className="text-2xl font-bold text-gray-800">Lv.{s.avatarLevel}</p>
+          <p className="text-2xl font-bold text-gray-800">Lv.{state.avatarLevel}</p>
           <p className="text-xs text-gray-500 mt-1">レベル</p>
         </div>
         <div className="bg-white rounded-xl p-3 shadow-sm">
-          <p className="text-2xl font-bold text-gray-800">{s.avatarDamage}</p>
+          <p className="text-2xl font-bold text-gray-800">{state.avatarDamage}</p>
           <p className="text-xs text-gray-500 mt-1">ダメージ</p>
         </div>
       </div>
 
-      {/* 投稿ボタン */}
       <Link
         href="/submit"
         className="w-full max-w-xs bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl text-center text-lg transition-colors"

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { getDeviceId } from "../lib/deviceId";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function SubmitPage() {
+  const { data: session } = useSession();
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,11 +25,13 @@ export default function SubmitPage() {
     setLoading(true);
 
     try {
-      const deviceId = getDeviceId();
       const res = await fetch(`${API_URL}/submit`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, url }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: JSON.stringify({ url }),
       });
 
       const data = await res.json();
@@ -38,8 +41,7 @@ export default function SubmitPage() {
         return;
       }
 
-      // 状態をローカルに保存してホームへ
-      localStorage.setItem("note_avatar_state", JSON.stringify(data.state));
+      // 結果メッセージだけlocalStorageに一時保存（表示後に使い捨て）
       localStorage.setItem("note_avatar_last_message", JSON.stringify({
         message: data.message,
         isMilestone: data.isMilestone,
@@ -73,9 +75,7 @@ export default function SubmitPage() {
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-red-500">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
         <button
           type="submit"
