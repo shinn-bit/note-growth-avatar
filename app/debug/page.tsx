@@ -25,17 +25,10 @@ const STREAK_FRAME: Record<string, { border: string; shadow: string; badge?: str
   rainbow: { border: "border-pink-400", shadow: "shadow-[0_0_28px_8px_rgba(244,114,182,0.6)]", badge: "🌈", label: "🌈レインボー" },
 };
 
-function getAvatarEmoji(formStage: number, damaged: boolean): string {
-  const stages = [
-    ["🥚", "💔"],
-    ["🐣", "🐤"],
-    ["🐥", "🐶"],
-    ["🦊", "🐺"],
-    ["🦁", "🐯"],
-    ["🐉", "🦴"],
-  ];
-  const s = stages[Math.min(formStage, stages.length - 1)];
-  return damaged ? s[1] : s[0];
+function getAvatarSrc(formStage: number, damaged: boolean): string {
+  const stage = Math.min(formStage, 5);
+  const state = damaged ? "damaged" : "normal";
+  return `/avatars/avatar_s${stage}_${state}.png`;
 }
 
 function getMilestones(courseType: string, freqTimes: number, freqDays: number): number[] {
@@ -108,7 +101,7 @@ function AvatarCard({
   const damaged = isDamaged(stageProgress, stagePeak, stageMax);
   const tier = getStreakTier(streak);
   const frame = STREAK_FRAME[tier];
-  const emoji = getAvatarEmoji(formStage, damaged);
+  const src = getAvatarSrc(formStage, damaged);
 
   return (
     <div className="relative flex flex-col items-center gap-1">
@@ -116,8 +109,9 @@ function AvatarCard({
         <span className="absolute -top-2 -right-2 text-lg z-10">{frame.badge}</span>
       )}
       <div className={`flex items-center justify-center w-24 h-24 rounded-full border-4 bg-white
-        text-5xl ${frame.border} ${frame.shadow} transition-all duration-300`}>
-        <span>{emoji}</span>
+        overflow-hidden ${frame.border} ${frame.shadow} transition-all duration-300`}>
+        <img src={src} alt={`s${formStage} ${damaged ? "damaged" : "normal"}`}
+          className="w-full h-full object-cover" />
       </div>
       <span className={`text-xs font-medium ${damaged ? "text-red-400" : "text-gray-400"}`}>
         {damaged ? "ダメージ" : "通常"}
@@ -297,12 +291,14 @@ export default function DebugPage() {
             <div key={stage} className="flex items-center gap-3">
               <span className="text-xs text-gray-400 w-12 text-right">Stage {stage}</span>
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-3xl">{getAvatarEmoji(stage, false)}</span>
+                <img src={getAvatarSrc(stage, false)} alt=""
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
                 <span className="text-xs text-gray-400">通常</span>
               </div>
               <div className="flex-1 h-px bg-gray-100" />
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-3xl">{getAvatarEmoji(stage, true)}</span>
+                <img src={getAvatarSrc(stage, true)} alt=""
+                  className="w-12 h-12 rounded-full object-cover border-2 border-red-200" />
                 <span className="text-xs text-red-300">ダメージ</span>
               </div>
             </div>

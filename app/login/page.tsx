@@ -37,7 +37,7 @@ export default function LoginPage() {
     <main className={styles.container}>
       <div className={styles.header}>
         <span className={styles.avatar}>🥚</span>
-        <h1 className={styles.title}>note継続アプリ</h1>
+        <h1 className={styles.title}>ちょんまげマッチョ</h1>
         <p className={styles.subtitle}>ログインして続きから始めよう</p>
       </div>
 

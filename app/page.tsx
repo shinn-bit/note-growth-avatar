@@ -43,18 +43,10 @@ const STREAK_FRAME: Record<string, { border: string; shadow: string; badge?: str
   rainbow: { border: "border-pink-400", shadow: "shadow-[0_0_28px_8px_rgba(244,114,182,0.6)]", badge: "🌈" },
 };
 
-// Placeholder avatar — will be replaced with real images (formStage 0-5 × normal/damaged)
-function getAvatarEmoji(formStage: number, damaged: boolean): string {
-  const stages = [
-    ["🥚", "💔"],
-    ["🐣", "🐤"],
-    ["🐥", "🐶"],
-    ["🦊", "🐺"],
-    ["🦁", "🐯"],
-    ["🐉", "🦴"],
-  ];
-  const s = stages[Math.min(formStage, stages.length - 1)];
-  return damaged ? s[1] : s[0];
+function getAvatarSrc(formStage: number, damaged: boolean): string {
+  const stage = Math.min(formStage, 5);
+  const state = damaged ? "damaged" : "normal";
+  return `/avatars/avatar_s${stage}_${state}.png`;
 }
 
 function AvatarDisplay({
@@ -66,19 +58,22 @@ function AvatarDisplay({
   const damaged = isDamaged(stageProgress, stagePeak, stageMax);
   const tier = getStreakTier(streak);
   const frame = STREAK_FRAME[tier];
-  const emoji = getAvatarEmoji(formStage, damaged);
+  const src = getAvatarSrc(formStage, damaged);
 
   return (
     <div className="relative flex flex-col items-center">
-      {/* Streak badge */}
       {frame.badge && (
         <span className="absolute -top-2 -right-2 text-xl z-10">{frame.badge}</span>
       )}
       <div
-        className={`flex flex-col items-center justify-center w-40 h-40 rounded-full border-4
-          ${frame.border} ${frame.shadow} bg-white text-7xl transition-all duration-500`}
+        className={`flex items-center justify-center w-40 h-40 rounded-full border-4
+          ${frame.border} ${frame.shadow} bg-white overflow-hidden transition-all duration-500`}
       >
-        <span>{emoji}</span>
+        <img
+          src={src}
+          alt={`avatar stage ${formStage} ${damaged ? "damaged" : "normal"}`}
+          className="w-full h-full object-cover"
+        />
       </div>
       {tier !== "none" && (
         <span className="mt-1 text-xs font-semibold text-yellow-500">
@@ -230,7 +225,7 @@ export default function HomePage() {
     <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-10 gap-6">
       {/* Header */}
       <div className="w-full max-w-xs flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">note継続アプリ</h1>
+        <h1 className="text-xl font-bold text-gray-800">ちょんまげマッチョ</h1>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="text-sm text-gray-400 hover:text-gray-600"
