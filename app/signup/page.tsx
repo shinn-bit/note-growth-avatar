@@ -37,7 +37,7 @@ export default function SignupPage() {
   return (
     <main className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.avatar}>🥚</span>
+        <img src="/icons/favicon.ico" alt="icon" className={styles.avatar} />
         <h1 className={styles.title}>新規登録</h1>
         <p className={styles.subtitle}>アカウントを作成してアバターを育てよう</p>
       </div>

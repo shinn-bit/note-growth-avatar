@@ -36,7 +36,7 @@ export default function LoginPage() {
   return (
     <main className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.avatar}>🥚</span>
+        <img src="/icons/favicon.ico" alt="icon" className={styles.avatar} />
         <h1 className={styles.title}>ちょんまげマッチョ</h1>
         <p className={styles.subtitle}>ログインして続きから始めよう</p>
       </div>
