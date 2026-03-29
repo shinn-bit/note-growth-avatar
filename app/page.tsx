@@ -196,6 +196,10 @@ export default function HomePage() {
           const data = await res.json();
           setState(data);
           if (!data.courseType) router.push("/setup");
+        } else if (res.status === 401) {
+          // トークン期限切れ → ログアウトしてログイン画面へ
+          signOut({ callbackUrl: "/login" });
+          return;
         }
       } catch {
         setState({
