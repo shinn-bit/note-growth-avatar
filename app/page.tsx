@@ -169,6 +169,21 @@ export default function HomePage() {
   const router = useRouter();
   const [state, setState] = useState<AvatarState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
+
+  async function handleReset() {
+    if (!confirm("本当にリセットしますか？\nアバターの進捗がすべて消えます。")) return;
+    setResetting(true);
+    try {
+      await fetch(`${API_URL}/reset`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session?.accessToken}` },
+      });
+      router.push("/setup");
+    } finally {
+      setResetting(false);
+    }
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -280,6 +295,15 @@ export default function HomePage() {
       >
         今日の投稿を記録する
       </Link>
+
+      {/* Reset */}
+      <button
+        onClick={handleReset}
+        disabled={resetting}
+        className="text-xs text-gray-300 hover:text-red-400 transition-colors disabled:opacity-50"
+      >
+        {resetting ? "リセット中..." : "最初からやり直す"}
+      </button>
     </main>
   );
 }

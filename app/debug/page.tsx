@@ -40,9 +40,10 @@ function getAvatarEmoji(formStage: number, damaged: boolean): string {
 
 function getMilestones(courseType: string, freqTimes: number, freqDays: number): number[] {
   const courseDays = courseType === "3month" ? 90 : 30;
-  const totalSlots = Math.max(5, Math.ceil(courseDays * freqTimes / freqDays));
-  return Array.from({ length: 5 }, (_, i) =>
-    Math.ceil(totalSlots * (i + 1) / 5)
+  const count = courseType === "3month" ? 5 : 3;
+  const totalSlots = Math.max(count, Math.ceil(courseDays * freqTimes / freqDays));
+  return Array.from({ length: count }, (_, i) =>
+    Math.ceil(totalSlots * (i + 1) / count)
   );
 }
 
