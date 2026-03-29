@@ -6,7 +6,7 @@ import Link from "next/link";
 // ---- ロジック (page.tsx と同じ) ----
 
 function isDamaged(stageProgress: number, stagePeak: number, stageMax: number): boolean {
-  return stagePeak >= stageMax / 3 && stageProgress <= stageMax / 3;
+  return stagePeak >= stageMax / 3 && stageProgress < stageMax / 3;
 }
 
 function getStreakTier(streak: number): "none" | "bronze" | "silver" | "gold" | "rainbow" {

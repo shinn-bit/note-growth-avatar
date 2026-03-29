@@ -23,7 +23,7 @@ type AvatarState = {
 
 // Damaged only if bar has fallen from a higher point (stagePeak records the high-water mark)
 function isDamaged(stageProgress: number, stagePeak: number, stageMax: number): boolean {
-  return stagePeak >= stageMax / 3 && stageProgress <= stageMax / 3;
+  return stagePeak >= stageMax / 3 && stageProgress < stageMax / 3;
 }
 
 // Streak frame tier
