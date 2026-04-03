@@ -301,6 +301,14 @@ export default function HomePage() {
         今日の投稿を記録する
       </Link>
 
+      {/* History link */}
+      <Link
+        href="/history"
+        className="w-full max-w-xs border border-gray-200 hover:border-gray-300 text-gray-600 font-medium py-3 rounded-xl text-center text-sm transition-colors bg-white"
+      >
+        🌿 投稿履歴を見る
+      </Link>
+
       {/* Reset */}
       <button
         onClick={handleReset}
