@@ -42,7 +42,7 @@ export function NotificationToggle({ accessToken }: Props) {
         const ok = await subscribePush(accessToken);
         if (ok) {
           setSubscribed(true);
-        } else if (Notification.permission === "denied") {
+        } else if ((Notification.permission as string) === "denied") {
           setDenied(true);
         }
       }
