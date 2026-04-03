@@ -57,7 +57,7 @@ export default function SubmitPage() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-12 gap-8">
+    <main className="flex flex-col items-center min-h-screen bg-[#f5f0eb] px-4 py-12 gap-8">
       <h1 className="text-2xl font-bold text-gray-800">今日の投稿を記録</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-4">
@@ -71,7 +71,7 @@ export default function SubmitPage() {
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://note.com/..."
             required
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#8aaa8a]"
           />
         </div>
 
@@ -80,7 +80,7 @@ export default function SubmitPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-300 text-white font-bold py-4 rounded-xl text-lg transition-colors"
+          className="w-full bg-[#5a7a5a] hover:bg-[#4a6a4a] disabled:bg-[#8aaa8a] text-white font-bold py-4 rounded-xl text-lg transition-colors"
         >
           {loading ? "送信中..." : "記録する"}
         </button>

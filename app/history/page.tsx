@@ -37,7 +37,7 @@ function PostCard({ post, ogp }: { post: Post; ogp: OgpData | null }) {
       className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
     >
       {/* サムネイル */}
-      <div className="w-full h-36 bg-gray-100 overflow-hidden">
+      <div className="w-full h-36 bg-[#ede8e0] overflow-hidden">
         {ogp?.image ? (
           <img
             src={ogp.image}
@@ -57,7 +57,7 @@ function PostCard({ post, ogp }: { post: Post; ogp: OgpData | null }) {
         <p className="text-sm font-medium text-gray-800 leading-snug line-clamp-2">
           {ogp?.title || "タイトルを取得中..."}
         </p>
-        <span className="text-xs text-indigo-400 mt-1">noteで見る →</span>
+        <span className="text-xs text-[#7a9a7a] mt-1">noteで見る →</span>
       </div>
     </a>
   );
@@ -112,7 +112,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-10 gap-6">
+    <main className="flex flex-col items-center min-h-screen bg-[#f5f0eb] px-4 py-10 gap-6">
       {/* Header */}
       <div className="w-full max-w-xs flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-800">投稿履歴</h1>
@@ -137,7 +137,7 @@ export default function HistoryPage() {
           <p className="text-gray-500 text-sm">まだ投稿がありません</p>
           <Link
             href="/submit"
-            className="mt-4 inline-block text-sm text-indigo-500 font-medium"
+            className="mt-4 inline-block text-sm text-[#5a7a5a] font-medium"
           >
             最初の投稿を記録する →
           </Link>

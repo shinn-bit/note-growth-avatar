@@ -27,7 +27,7 @@ export default function ResultPage() {
   const bgColor = msg.isMilestone
     ? "bg-yellow-50"
     : msg.alreadySubmitted
-    ? "bg-gray-50"
+    ? "bg-[#f5f0eb]"
     : "bg-green-50";
 
   const icon = msg.isMilestone ? "🎉" : msg.alreadySubmitted ? "✅" : "📝";
@@ -44,7 +44,7 @@ export default function ResultPage() {
 
       <button
         onClick={() => router.push("/")}
-        className="w-full max-w-xs bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl text-lg transition-colors"
+        className="w-full max-w-xs bg-[#5a7a5a] hover:bg-[#4a6a4a] text-white font-bold py-4 rounded-xl text-lg transition-colors"
       >
         ホームに戻る
       </button>

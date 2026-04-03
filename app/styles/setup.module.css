@@ -8,7 +8,7 @@
   align-items: center;
   min-height: 100svh;
   padding: 2.5rem 1.25rem 3rem;
-  background-color: #f8f7f4;
+  background-color: #f5f0eb;
 }
 
 .header {
@@ -62,7 +62,7 @@
 
 .courseCard {
   background: #fff;
-  border: 2px solid #e5e5e5;
+  border: 2px solid #e8e0d8;
   border-radius: 1rem;
   padding: 1.125rem 1rem;
   cursor: pointer;
@@ -73,13 +73,13 @@
 }
 
 .courseCard:hover {
-  border-color: #a5b4fc;
+  border-color: #8aaa8a;
 }
 
 .courseCardSelected {
-  border-color: #6366f1;
-  background: #eef2ff;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  border-color: #5a7a5a;
+  background: #edf3ed;
+  box-shadow: 0 0 0 3px rgba(90, 122, 90, 0.12);
 }
 
 .courseCardTitle {
@@ -91,7 +91,7 @@
 .courseCardDays {
   font-size: 1.375rem;
   font-weight: 800;
-  color: #6366f1;
+  color: #5a7a5a;
   line-height: 1;
 }
 
@@ -117,7 +117,7 @@
 
 .presetBtn {
   padding: 0.5rem 0.875rem;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid #e8e0d8;
   border-radius: 2rem;
   background: #fff;
   font-size: 0.875rem;
@@ -128,20 +128,20 @@
 }
 
 .presetBtn:hover {
-  border-color: #a5b4fc;
-  color: #6366f1;
+  border-color: #8aaa8a;
+  color: #5a7a5a;
 }
 
 .presetBtnSelected {
-  border-color: #6366f1;
-  background: #6366f1;
+  border-color: #5a7a5a;
+  background: #5a7a5a;
   color: #fff;
 }
 
 /* ---- Custom Freq ---- */
 .freqCustom {
   background: #fff;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid #e8e0d8;
   border-radius: 1rem;
   padding: 1rem 1.25rem;
   display: flex;
@@ -151,7 +151,7 @@
 }
 
 .freqCustomSelected {
-  border-color: #6366f1;
+  border-color: #5a7a5a;
 }
 
 .freqLabel {
@@ -162,12 +162,12 @@
 
 .freqSelect {
   padding: 0.375rem 0.625rem;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid #e8e0d8;
   border-radius: 0.5rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #6366f1;
-  background: #f5f5ff;
+  color: #5a7a5a;
+  background: #f0f5f0;
   cursor: pointer;
   appearance: none;
   text-align: center;
@@ -176,18 +176,18 @@
 
 .freqSelect:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #5a7a5a;
 }
 
 /* ---- Summary ---- */
 .summary {
   width: 100%;
   max-width: 360px;
-  background: #eef2ff;
+  background: #edf3ed;
   border-radius: 0.875rem;
   padding: 0.875rem 1.25rem;
   font-size: 0.875rem;
-  color: #4338ca;
+  color: #3d6b3d;
   font-weight: 600;
   text-align: center;
   margin-bottom: 1.75rem;
@@ -198,7 +198,7 @@
   width: 100%;
   max-width: 360px;
   padding: 0.9375rem;
-  background: #6366f1;
+  background: #5a7a5a;
   color: #fff;
   font-size: 1rem;
   font-weight: 700;
@@ -209,7 +209,7 @@
 }
 
 .button:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #4a6a4a;
 }
 
 .button:disabled {

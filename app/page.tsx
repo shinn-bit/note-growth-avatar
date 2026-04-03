@@ -98,7 +98,7 @@ function StageProgressBar({
     ? "bg-gradient-to-r from-yellow-400 to-pink-400"
     : damaged
     ? "bg-red-400"
-    : "bg-indigo-400";
+    : "bg-[#5a7a5a]";
 
   return (
     <div className="w-full">
@@ -141,12 +141,12 @@ function CourseProgress({
   return (
     <div className="w-full">
       <div className="flex justify-between text-xs text-gray-400 mb-1">
-        <span className="font-semibold text-indigo-500">{label}</span>
+        <span className="font-semibold text-[#5a7a5a]">{label}</span>
         <span>{elapsedDays} / {totalDays}日</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-1.5">
         <div
-          className="bg-indigo-300 h-1.5 rounded-full transition-all duration-500"
+          className="bg-[#8aaa8a] h-1.5 rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -227,7 +227,7 @@ export default function HomePage() {
   if (!state || !state.courseType) return null;
 
   return (
-    <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-10 gap-6">
+    <main className="flex flex-col items-center min-h-screen bg-[#f5f0eb] px-4 py-10 gap-6">
       {/* Header */}
       <div className="w-full max-w-xs flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-800">note TREE</h1>
@@ -296,7 +296,7 @@ export default function HomePage() {
       {/* Submit button */}
       <Link
         href="/submit"
-        className="w-full max-w-xs bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl text-center text-lg transition-colors"
+        className="w-full max-w-xs bg-[#5a7a5a] hover:bg-[#4a6a4a] text-white font-bold py-4 rounded-xl text-center text-lg transition-colors"
       >
         今日の投稿を記録する
       </Link>
