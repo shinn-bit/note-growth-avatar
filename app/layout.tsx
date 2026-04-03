@@ -14,20 +14,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL = "https://note-growth-avatar.vercel.app";
+const APP_TITLE = "note TREE｜投稿を続けると植物が育つnote継続サポートアプリ";
+const APP_DESCRIPTION =
+  "noteを投稿するたびに植物が育つ継続サポートアプリ。投稿をサボると枯れていく。反応がなくても努力を可視化して、習慣化をサポートします。";
+
 export const metadata: Metadata = {
-  title: "ちょんまげマッチョ｜note継続アプリ",
-  description: "投稿するたびに自分の分身が成長するnote継続アプリ",
+  metadataBase: new URL(APP_URL),
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
+  keywords: ["note", "継続", "習慣化", "投稿", "植物", "サポートアプリ", "収益化", "ブログ"],
   openGraph: {
-    title: "ちょんまげマッチョ｜note継続アプリ",
-    description: "投稿するたびに自分の分身が成長するnote継続アプリ",
-    url: "https://note-growth-avatar.vercel.app",
-    siteName: "ちょんまげマッチョ｜note継続アプリ",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    url: APP_URL,
+    siteName: "note TREE",
     images: [
       {
         url: "/ogp/og-image.png",
         width: 1200,
         height: 630,
-        alt: "ちょんまげマッチョ｜note継続アプリ",
+        alt: APP_TITLE,
       },
     ],
     locale: "ja_JP",
@@ -35,13 +42,17 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ちょんまげマッチョ｜note継続アプリ",
-    description: "投稿するたびに自分の分身が成長するnote継続アプリ",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
     images: ["/ogp/og-image.png"],
   },
   icons: {
     icon: "/icons/favicon.ico",
     apple: "/icons/apple-touch-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -56,6 +67,22 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebApplication",
+                name: "note TREE",
+                url: APP_URL,
+                description: APP_DESCRIPTION,
+                applicationCategory: "LifestyleApplication",
+                operatingSystem: "Web",
+                inLanguage: "ja",
+                offers: { "@type": "Offer", price: "0", priceCurrency: "JPY" },
+              }),
+            }}
+          />
           <SwRegister />
           <AuthSessionProvider>{children}</AuthSessionProvider>
         </body>

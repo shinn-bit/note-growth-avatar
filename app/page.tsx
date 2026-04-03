@@ -230,7 +230,7 @@ export default function HomePage() {
     <main className="flex flex-col items-center min-h-screen bg-gray-50 px-4 py-10 gap-6">
       {/* Header */}
       <div className="w-full max-w-xs flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">ちょんまげマッチョ</h1>
+        <h1 className="text-xl font-bold text-gray-800">note TREE</h1>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="text-sm text-gray-400 hover:text-gray-600"

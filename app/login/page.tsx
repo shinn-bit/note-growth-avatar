@@ -37,7 +37,7 @@ export default function LoginPage() {
     <main className={styles.container}>
       <div className={styles.header}>
         <img src="/icons/favicon.ico" alt="icon" className={styles.avatar} />
-        <h1 className={styles.title}>ちょんまげマッチョ</h1>
+        <h1 className={styles.title}>note TREE</h1>
         <p className={styles.subtitle}>ログインして続きから始めよう</p>
       </div>
 
