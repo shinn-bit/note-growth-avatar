@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { NotificationToggle } from "./components/NotificationToggle";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -286,6 +287,11 @@ export default function HomePage() {
       <p className="text-xs text-gray-400">
         ペース：{freqLabel(state.freqTimes, state.freqDays)}
       </p>
+
+      {/* Notification toggle */}
+      {session?.accessToken && (
+        <NotificationToggle accessToken={session.accessToken} />
+      )}
 
       {/* Submit button */}
       <Link
