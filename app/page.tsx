@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NotificationToggle } from "./components/NotificationToggle";
+import { PromoModal } from "./components/PromoModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -310,6 +311,11 @@ export default function HomePage() {
       {/* Notification toggle */}
       {session?.accessToken && (
         <NotificationToggle accessToken={session.accessToken} />
+      )}
+
+      {/* Promo modal (notification / iOS add-to-home) */}
+      {session?.accessToken && (
+        <PromoModal accessToken={session.accessToken} />
       )}
 
       {/* Submit button */}
