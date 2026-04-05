@@ -86,12 +86,14 @@ function AvatarDisplay({
 }
 
 function StageProgressBar({
-  stageProgress, stagePeak, stageMax, formStage,
+  stageProgress, stagePeak, stageMax, formStage, overridePct,
 }: {
-  stageProgress: number; stagePeak: number; stageMax: number; formStage: number;
+  stageProgress: number; stagePeak: number; stageMax: number; formStage: number; overridePct?: number;
 }) {
   const damaged = isDamaged(stageProgress, stagePeak, stageMax);
-  const pct = stageMax > 0 ? Math.min(100, (stageProgress / stageMax) * 100) : 0;
+  const pct = overridePct !== undefined
+    ? overridePct
+    : stageMax > 0 ? Math.min(100, (stageProgress / stageMax) * 100) : 0;
   const isFinalStage = formStage >= 5;
 
   const barColor = isFinalStage
@@ -166,6 +168,7 @@ export default function HomePage() {
   const [state, setState] = useState<AvatarState | null>(null);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
+  const [barAnimPct, setBarAnimPct] = useState<number | undefined>(undefined);
 
   async function handleReset() {
     if (!confirm("本当にリセットしますか？\nアバターの進捗がすべて消えます。")) return;
@@ -197,6 +200,21 @@ export default function HomePage() {
           const data = await res.json();
           setState(data);
           if (!data.courseType) router.push("/setup");
+
+          // ゲージアニメーション: 投稿直後の戻りなら前回値から伸ばす
+          const prevRaw = localStorage.getItem("note_avatar_prev_state");
+          if (prevRaw) {
+            try {
+              const prev = JSON.parse(prevRaw);
+              // 同じ formStage のとき（進化なし）だけアニメーション
+              if (prev.formStage === data.formStage && prev.stageMax > 0) {
+                const prevPct = (prev.stageProgress / prev.stageMax) * 100;
+                setBarAnimPct(prevPct);
+                setTimeout(() => setBarAnimPct(undefined), 80);
+              }
+            } catch {}
+            localStorage.removeItem("note_avatar_prev_state");
+          }
         } else if (res.status === 401) {
           // トークン期限切れ → ログアウトしてログイン画面へ
           signOut({ callbackUrl: "/login" });
@@ -255,6 +273,7 @@ export default function HomePage() {
           stagePeak={state.stagePeak}
           stageMax={state.stageMax}
           formStage={state.formStage}
+          overridePct={barAnimPct}
         />
       </div>
 
@@ -297,6 +316,15 @@ export default function HomePage() {
       <Link
         href="/submit"
         className="w-full max-w-xs bg-[#5a7a5a] hover:bg-[#4a6a4a] text-white font-bold py-4 rounded-xl text-center text-lg transition-colors"
+        onClick={() => {
+          // ゲージアニメーション & 進化演出のために現在の状態を保存
+          localStorage.setItem("note_avatar_prev_state", JSON.stringify({
+            formStage: state.formStage,
+            stageProgress: state.stageProgress,
+            stageMax: state.stageMax,
+            avatarLevel: state.avatarLevel,
+          }));
+        }}
       >
         今日の投稿を記録する
       </Link>

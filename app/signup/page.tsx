@@ -62,12 +62,29 @@ export default function SignupPage() {
           <input
             className={styles.input}
             type="password"
-            placeholder="8文字以上"
+            placeholder="パスワードを入力"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
           />
+          {/* パスワード条件 */}
+          {password.length > 0 && (
+            <ul style={{ margin: "6px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "3px" }}>
+              {[
+                { label: "8文字以上",          ok: password.length >= 8 },
+                { label: "大文字を含む（A-Z）", ok: /[A-Z]/.test(password) },
+                { label: "小文字を含む（a-z）", ok: /[a-z]/.test(password) },
+                { label: "数字を含む（0-9）",   ok: /[0-9]/.test(password) },
+                { label: "記号を含む（!@#$ など）", ok: /[^A-Za-z0-9]/.test(password) },
+              ].map(({ label, ok }) => (
+                <li key={label} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: ok ? "#5a7a5a" : "#aaa" }}>
+                  <span style={{ fontWeight: 700 }}>{ok ? "✓" : "○"}</span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <button className={styles.button} type="submit" disabled={loading}>
