@@ -81,11 +81,13 @@ export function PromoModal({ accessToken }: Props) {
           />
         )}
 
-        {/* iOS: 画像（後で差し替え） */}
+        {/* iOS: ホーム画面追加手順画像 */}
         {platform === "ios" && (
-          <div className="px-4 py-8 text-center text-gray-400 text-sm">
-            {/* iOS用画像をここに追加予定 */}
-          </div>
+          <img
+            src="/demo/notification.png"
+            alt="ホーム画面への追加手順"
+            className="w-full object-contain"
+          />
         )}
 
         {/* CTA */}
