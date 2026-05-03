@@ -245,12 +245,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* streak pill */}
-        <div style={{ position: "absolute", bottom: 16, left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 10 }}>
-          <div style={{ background: accent, color: "white", padding: "6px 20px", borderRadius: 20, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 7, transition: "background 0.4s", boxShadow: `0 4px 16px ${damaged ? "rgba(138,64,48,0.35)" : "rgba(61,122,80,0.35)"}` }}>
-            {damaged ? "⚠️" : "🔥"} {state.streak}日連続投稿中
-          </div>
-        </div>
       </div>
 
       {/* ── BOTTOM: info panel ── */}
