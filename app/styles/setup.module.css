@@ -21,8 +21,10 @@
 }
 
 .avatar {
-  font-size: 3rem;
-  line-height: 1;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 18px;
 }
 
 .title {

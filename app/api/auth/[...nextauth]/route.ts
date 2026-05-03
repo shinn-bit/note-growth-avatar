@@ -17,18 +17,32 @@ function computeSecretHash(username: string): string {
     .digest("base64");
 }
 
+function signGuestJwt(sub: string): string {
+  const secret = process.env.NEXTAUTH_SECRET!;
+  const header  = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const now     = Math.floor(Date.now() / 1000);
+  const payload = Buffer.from(JSON.stringify({
+    sub,
+    type: "guest",
+    iat: now,
+    exp: now + 90 * 24 * 60 * 60,
+  })).toString("base64url");
+  const sig = crypto.createHmac("sha256", secret).update(`${header}.${payload}`).digest("base64url");
+  return `${header}.${payload}.${sig}`;
+}
+
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
+      id: "credentials",
       name: "Credentials",
       credentials: {
-        email: { label: "メールアドレス", type: "email" },
-        password: { label: "パスワード", type: "password" },
+        email:    { label: "メールアドレス", type: "email" },
+        password: { label: "パスワード",     type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
         try {
           const res = await cognitoClient.send(
             new InitiateAuthCommand({
@@ -41,14 +55,11 @@ const handler = NextAuth({
               },
             })
           );
-
           const { AuthenticationResult } = res;
           if (!AuthenticationResult?.IdToken) return null;
-
           const payload = JSON.parse(
             Buffer.from(AuthenticationResult.IdToken.split(".")[1], "base64").toString()
           );
-
           return {
             id: payload.sub,
             email: payload.email,
@@ -58,6 +69,19 @@ const handler = NextAuth({
           console.error("Cognito auth error:", err);
           return null;
         }
+      },
+    }),
+    CredentialsProvider({
+      id: "guest",
+      name: "Guest",
+      credentials: {
+        deviceId: { label: "Device ID", type: "text" },
+      },
+      async authorize(credentials) {
+        const deviceId = credentials?.deviceId;
+        if (!deviceId) return null;
+        const sub = `guest-${deviceId}`;
+        return { id: sub, name: "ゲスト", accessToken: signGuestJwt(sub) };
       },
     }),
   ],

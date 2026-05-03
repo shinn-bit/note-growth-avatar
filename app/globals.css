@@ -1,36 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f0eb;
-  --foreground: #1a1a1a;
+  --background: #EAE3D6;
+  --foreground: #1A1A18;
+  --green: #3D7A50;
+  --gold: #C4922A;
+  --red-d: #8A4030;
+  --blue: #7A9ABE;
 }
+
+/* font aliases */
+.font-dancing  { font-family: var(--font-dancing), cursive; }
+.font-dm-serif { font-family: var(--font-dm-serif), serif; }
+.font-noto     { font-family: var(--font-noto), sans-serif; }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Noto Sans JP', sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
+/* ── Confetti (result page) ── */
 @keyframes confettifall {
   0%   { opacity: 1; transform: translate(0, 0) rotate(0deg); }
   100% { opacity: 0; transform: translate(var(--dx), 420px) rotate(var(--rot)); }
 }
 
+/* ── Evolution (result page) ── */
 @keyframes evo-avatar-in {
   0%   { opacity: 0; transform: scale(0.4); }
   65%  { transform: scale(1.08); }
   100% { opacity: 1; transform: scale(1); }
 }
-
 @keyframes evo-badge-pop {
   0%   { opacity: 0; transform: scale(0.7) translateY(12px); }
   70%  { transform: scale(1.04) translateY(-2px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* ── Botanical / avatar animations ── */
+@keyframes fadeIn        { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp      { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes scaleIn       { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+@keyframes slideUp       { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes splashGrow    { 0%{transform:scale(0.6) translateY(20px);opacity:0;} 65%{transform:scale(1.04) translateY(-3px);opacity:1;} 100%{transform:scale(1) translateY(0);opacity:1;} }
+@keyframes scriptReveal  { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+@keyframes taglineIn     { from{opacity:0;letter-spacing:8px;} to{opacity:1;letter-spacing:3px;} }
+@keyframes shimmerDot    { 0%,100%{opacity:0.25;transform:scale(0.75);} 50%{opacity:1;transform:scale(1);} }
+@keyframes celebPop      { 0%{opacity:0;transform:scale(0.72) translateY(18px);} 60%{opacity:1;transform:scale(1.04) translateY(-3px);} 100%{opacity:1;transform:scale(1) translateY(0);} }
+@keyframes pulseGlow     { 0%,100%{box-shadow:0 6px 22px rgba(61,122,80,0.4);} 50%{box-shadow:0 6px 30px rgba(61,122,80,0.7),0 0 0 6px rgba(61,122,80,0.1);} }
+@keyframes vineGrow      { from{stroke-dashoffset:600;} to{stroke-dashoffset:0;} }
+@keyframes leafPop       { 0%{opacity:0;transform:scale(0) rotate(-30deg);} 70%{transform:scale(1.1) rotate(3deg);opacity:1;} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
+@keyframes leafSway      { 0%,100%{transform:rotate(0deg);} 40%{transform:rotate(4deg);} 70%{transform:rotate(-3deg);} }
+@keyframes btnLeafL      { 0%,100%{transform:translateY(-50%) rotate(0deg);} 50%{transform:translateY(-50%) rotate(-10deg) translateX(-2px);} }
+@keyframes btnLeafR      { 0%,100%{transform:translateY(-50%) scaleX(-1) rotate(0deg);} 50%{transform:translateY(-50%) scaleX(-1) rotate(-10deg) translateX(-2px);} }
+@keyframes leafFall0     { 0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:1;} 100%{transform:translateY(340px) translateX(50px) rotate(230deg);opacity:0;} }
+@keyframes leafFall1     { 0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:1;} 100%{transform:translateY(300px) translateX(-40px) rotate(180deg);opacity:0;} }
+@keyframes leafFall2     { 0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:1;} 100%{transform:translateY(320px) translateX(20px) rotate(270deg);opacity:0;} }
+@keyframes growCelebrate { 0%{transform:scale(1);} 20%{transform:scale(1.1) rotate(2deg);} 50%{transform:scale(0.97) rotate(-1deg);} 75%{transform:scale(1.04);} 100%{transform:scale(1);} }

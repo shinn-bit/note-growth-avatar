@@ -3,26 +3,29 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { BotanicalCorners } from "../components/BotanicalCorners";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const BG    = "#EAE3D6";
+const GREEN = "#3D7A50";
+const DARK  = "#1A1A18";
 
 type OgpData = { title: string; image: string };
 
 export default function SubmitPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [url, setUrl] = useState("");
+  const [url, setUrl]       = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [ogp, setOgp] = useState<OgpData | null>(null);
+  const [error, setError]   = useState("");
+  const [focused, setFocused] = useState(false);
+  const [ogp, setOgp]       = useState<OgpData | null>(null);
   const [ogpLoading, setOgpLoading] = useState(false);
 
-  // OGP 自動取得（note.com URL が入力されたら debounce で取得）
   useEffect(() => {
     setOgp(null);
     if (!url.includes("note.com")) return;
-
     setOgpLoading(true);
     const timer = setTimeout(async () => {
       try {
@@ -35,11 +38,7 @@ export default function SubmitPage() {
         setOgpLoading(false);
       }
     }, 700);
-
-    return () => {
-      clearTimeout(timer);
-      setOgpLoading(false);
-    };
+    return () => { clearTimeout(timer); setOgpLoading(false); };
   }, [url]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -70,17 +69,15 @@ export default function SubmitPage() {
         return;
       }
 
-      // 進化演出のために投稿前の状態を読み出す
       let prevFormStage = 0;
       let prevAvatarLevel = 0;
       const prevRaw = localStorage.getItem("note_avatar_prev_state");
       if (prevRaw) {
         try {
           const prev = JSON.parse(prevRaw);
-          prevFormStage  = prev.formStage  ?? 0;
+          prevFormStage   = prev.formStage  ?? 0;
           prevAvatarLevel = prev.avatarLevel ?? 0;
         } catch {}
-        // ここでは削除しない（ホーム画面のゲージアニメーションに使う）
       }
 
       const evolved =
@@ -107,62 +104,89 @@ export default function SubmitPage() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen bg-[#f5f0eb] px-4 py-12 gap-8">
-      <h1 className="text-2xl font-bold text-gray-800">今日の投稿を記録</h1>
+    <div style={{ width: "100%", maxWidth: 390, margin: "0 auto", minHeight: "100dvh", background: BG, position: "relative", overflow: "hidden", animation: "fadeIn 0.3s ease" }}>
+      <BotanicalCorners phase={3} />
 
-      <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">
-            note の記事 URL
-          </label>
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://note.com/..."
-            required
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#8aaa8a]"
-          />
+      <div style={{ position: "relative", zIndex: 2, padding: "0 0 80px" }}>
+        {/* header */}
+        <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>投稿を記録する</div>
+          <div
+            onClick={() => router.back()}
+            style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}
+          >✕</div>
         </div>
 
-        {/* OGP プレビュー */}
-        {ogpLoading && (
-          <div className="w-full rounded-xl bg-white border border-gray-200 px-4 py-3 text-sm text-gray-400 animate-pulse">
-            記事を取得中...
-          </div>
-        )}
-        {!ogpLoading && ogp && (
-          <div className="w-full rounded-xl bg-white border border-gray-200 overflow-hidden shadow-sm flex gap-3 items-center p-3">
-            {ogp.image && (
-              <img
-                src={ogp.image}
-                alt="OGP"
-                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-              />
+        <div style={{ padding: "0 24px", marginTop: 24 }}>
+          <div style={{ fontSize: 13, color: "#8A9080", marginBottom: 9 }}>Note記事のURLを貼り付けてください</div>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <input
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://note.com/..."
+              style={{
+                width: "100%", height: 50, borderRadius: 14,
+                border: `1.5px solid ${url ? GREEN : focused ? GREEN : "#C8C0B0"}`,
+                background: "rgba(255,255,255,0.7)",
+                padding: "0 14px", fontSize: 14, color: DARK,
+                outline: "none", transition: "border 0.2s",
+                boxSizing: "border-box", fontFamily: "var(--font-noto), sans-serif",
+              }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+            />
+
+            {/* OGP preview */}
+            {ogpLoading && (
+              <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 14, padding: "12px 14px", fontSize: 13, color: "#A09080" }}>
+                記事を取得中...
+              </div>
             )}
-            <p className="text-sm text-gray-700 font-medium line-clamp-3 leading-snug">
-              {ogp.title || "（タイトルなし）"}
-            </p>
+            {!ogpLoading && ogp && (
+              <div style={{ background: "rgba(255,255,255,0.85)", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", display: "flex", gap: 12, alignItems: "center", padding: 12 }}>
+                {ogp.image && (
+                  <img src={ogp.image} alt="OGP" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+                )}
+                <p style={{ fontSize: 13, color: DARK, fontWeight: 600, lineHeight: 1.4, margin: 0 }}>
+                  {ogp.title || "（タイトルなし）"}
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ background: "rgba(180,60,40,0.08)", border: "1px solid rgba(180,60,40,0.2)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#A04030" }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !url.trim()}
+              style={{
+                width: "100%", height: 56, borderRadius: 28,
+                background: loading || !url.trim() ? "#C0B8AE" : GREEN,
+                color: "white", border: "none",
+                fontSize: 16, fontWeight: 700,
+                cursor: loading || !url.trim() ? "default" : "pointer",
+                boxShadow: loading || !url.trim() ? "none" : "0 6px 22px rgba(61,122,80,0.4)",
+                animation: loading || !url.trim() ? "none" : "pulseGlow 2.5s ease-in-out infinite",
+                transition: "all 0.25s", fontFamily: "var(--font-noto), sans-serif",
+              }}
+            >
+              {loading ? "記録中 …" : "記録する 🌱"}
+            </button>
+          </form>
+        </div>
+
+        {/* avatar hint */}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
+          <div style={{ width: 120, height: 120, borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.7 }}>
+            <img src="/avatars/avatar_s1_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
-        )}
-
-        {error && <p className="text-sm text-red-500">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-[#5a7a5a] hover:bg-[#4a6a4a] disabled:bg-[#8aaa8a] text-white font-bold py-4 rounded-xl text-lg transition-colors"
-        >
-          {loading ? "送信中..." : "記録する"}
-        </button>
-      </form>
-
-      <button
-        onClick={() => router.back()}
-        className="text-sm text-gray-400 hover:text-gray-600"
-      >
-        戻る
-      </button>
-    </main>
+        </div>
+        <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: "#9A9080" }}>投稿するたびに木が育ちます</div>
+      </div>
+    </div>
   );
 }
