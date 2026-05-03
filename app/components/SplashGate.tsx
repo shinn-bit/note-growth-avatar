@@ -42,16 +42,13 @@ function Onboarding({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 190, background: BG, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      <BotanicalCorners phase={3} />
-
-      {/* skip */}
-      <div style={{ position: "absolute", top: 52, right: 24, zIndex: 10 }}>
-        <div onClick={onDone} style={{ fontSize: 13, color: "#9A9080", fontWeight: 500, cursor: "pointer", padding: "4px 8px" }}>スキップ</div>
-      </div>
+    <div style={{ position: "fixed", inset: 0, zIndex: 190, background: "rgba(0,0,0,0.3)", display: "flex", justifyContent: "center" }}>
+    <div style={{ width: "100%", maxWidth: 390, background: BG, display: "flex", flexDirection: "column", overflowY: "auto", position: "relative" }}>
+      {/* 上隅だけ表示（下隅は説明テキストに被るため非表示） */}
+      <BotanicalCorners phase={2} />
 
       {/* image — top 55% */}
-      <div style={{ width: "100%", height: 460, position: "relative", flexShrink: 0, overflow: "hidden" }}>
+      <div style={{ width: "100%", height: 340, position: "relative", flexShrink: 0, overflow: "hidden" }}>
         <img key={animKey} src={s.img} alt=""
           style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", display: "block", animation: "scaleIn 0.5s ease" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100, background: `linear-gradient(to top,${BG} 0%,transparent 100%)`, pointerEvents: "none" }} />
@@ -59,6 +56,16 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 
       {/* content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 32px", zIndex: 2 }}>
+
+        {/* skip pill — コンテンツ内右上 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12, marginTop: 4 }}>
+          <div onClick={onDone} style={{
+            fontSize: 12, color: "#7A8070", fontWeight: 600, cursor: "pointer",
+            padding: "5px 14px", borderRadius: 20,
+            background: "rgba(255,255,255,0.65)", border: "1px solid rgba(0,0,0,0.08)",
+            backdropFilter: "blur(4px)",
+          }}>スキップ</div>
+        </div>
         {/* step dots */}
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20 }}>
           {OB_STEPS.map((_, i) => (
@@ -101,6 +108,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -150,10 +158,15 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
 
       {showSplash && (
         <div style={{
-          position: "fixed", inset: 0, zIndex: 200, background: BG,
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          position: "fixed", inset: 0, zIndex: 200,
+          background: leaving ? "transparent" : "rgba(0,0,0,0.2)",
+          display: "flex", justifyContent: "center", alignItems: "stretch",
           opacity: leaving ? 0 : 1, transition: leaving ? "opacity 0.4s ease" : "none",
-          overflow: "hidden",
+        }}>
+        <div style={{
+          width: "100%", maxWidth: 390, background: BG,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          position: "relative", overflow: "hidden",
         }}>
           <BotanicalCorners phase={phase >= 2 ? 3 : phase >= 1 ? 2 : 0} />
 
@@ -187,6 +200,7 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
               <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: GREEN, animation: `shimmerDot 1.2s ${i * 0.22}s ease-in-out infinite` }} />
             ))}
           </div>
+        </div>
         </div>
       )}
     </>
