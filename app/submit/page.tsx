@@ -182,7 +182,7 @@ export default function SubmitPage() {
         {/* avatar hint */}
         <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
           <div style={{ width: 120, height: 120, borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.7 }}>
-            <img src="/avatars/avatar_s1_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src="/avatars/stage2_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         </div>
         <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: "#9A9080" }}>投稿するたびに木が育ちます</div>

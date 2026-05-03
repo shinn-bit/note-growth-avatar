@@ -95,7 +95,7 @@ function EvolutionScreen({ msg, onDone }: { msg: LastMessage; onDone: () => void
       >
         {/* 旧アバター */}
         <img
-          src={`/avatars/avatar_s${prevStage}_normal.png`}
+          src={`/avatars/stage${prevStage}_normal.png`}
           alt="before"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-500"
           style={{
@@ -105,7 +105,7 @@ function EvolutionScreen({ msg, onDone }: { msg: LastMessage; onDone: () => void
         />
         {/* 新アバター */}
         <img
-          src={`/avatars/avatar_s${Math.min(newStage, 5)}_normal.png`}
+          src={`/avatars/stage${Math.min(newStage, 5)}_normal.png`}
           alt="after"
           className="absolute inset-0 w-full h-full object-cover"
           style={{

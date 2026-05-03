@@ -107,7 +107,7 @@ export default function SetupPage() {
   return (
     <main className={styles.container}>
       <div className={styles.header}>
-        <img src="/avatars/avatar_s2_normal.png" alt="avatar" className={styles.avatar} />
+        <img src="/avatars/stage2_normal.png" alt="avatar" className={styles.avatar} />
         <h1 className={styles.title}>コースを設定しよう</h1>
         <p className={styles.subtitle}>あなたのペースで続けられるプランを選ぼう</p>
       </div>

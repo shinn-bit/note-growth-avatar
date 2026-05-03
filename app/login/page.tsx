@@ -62,7 +62,7 @@ export default function LoginPage() {
         {/* avatar header */}
         <div style={{ display: "flex", justifyContent: "center", padding: "48px 0 0", animation: "fadeInUp 0.5s 0.05s both" }}>
           <div style={{ width: 140, height: 140, borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.10)", border: "1.5px solid rgba(200,185,155,0.55)", background: BG }}>
-            <img src="/avatars/avatar_s1_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src="/avatars/stage2_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         </div>
 
