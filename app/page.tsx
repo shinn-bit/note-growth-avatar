@@ -198,7 +198,7 @@ export default function HomePage() {
       }
       if (histRes.ok) {
         const { posts: raw } = await histRes.json();
-        const recent = (raw as { date: string; url: string }[]).slice(0, 5);
+        const recent = (raw as { date: string; url: string }[]).slice(0, 3);
         const withOgp = await Promise.all(recent.map(async p => {
           try {
             const r = await fetch(`/api/ogp?url=${encodeURIComponent(p.url)}`);
@@ -251,7 +251,6 @@ export default function HomePage() {
 
   return (
     <div style={{ background: BG, minHeight: "100dvh", position: "relative", overflow: "hidden", maxWidth: 390, margin: "0 auto", display: "flex", flexDirection: "column" }}>
-      <BotanicalCorners phase={3} />
 
       {/* ── TOP: full-bleed avatar ── */}
       <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", flexShrink: 0 }}>
@@ -341,6 +340,14 @@ export default function HomePage() {
                 </div>
               </a>
             ))}
+            <Link href="/history" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              height: 40, borderRadius: 20, marginTop: 4,
+              border: "1px solid #C8C0B0", background: "rgba(255,255,255,0.5)",
+              fontSize: 13, fontWeight: 600, color: "#7A8070", textDecoration: "none",
+            }}>
+              もっと見る →
+            </Link>
           </div>
         )}
 
