@@ -34,9 +34,130 @@ type AvatarState = {
   courseStartDate: string | null;
   freqTimes: number;
   freqDays: number;
+  lastPostDate: string | null;
 };
 
 type PostCard = { date: string; url: string; title: string; image: string };
+
+function getTodayJST(): string {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const y = jst.getUTCFullYear();
+  const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(jst.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function calcDaysUntilDead(
+  stageProgress: number,
+  lastPostDate: string,
+  today: string,
+  freqTimes: number,
+  freqDays: number
+): number {
+  if (stageProgress <= 0) return 0;
+  const interval = freqDays / freqTimes;
+  const dayDiff = Math.round(
+    (new Date(today).getTime() - new Date(lastPostDate).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return Math.max(0, Math.ceil(stageProgress * interval - dayDiff + 1));
+}
+
+function CountdownBanner({
+  stageProgress, lastPostDate, freqTimes, freqDays,
+}: {
+  stageProgress: number; lastPostDate: string | null;
+  freqTimes: number; freqDays: number;
+}) {
+  const [today, setToday] = useState<string | null>(null);
+  const [hoursLeft, setHoursLeft] = useState(0);
+
+  useEffect(() => {
+    setToday(getTodayJST());
+    const now = Date.now();
+    const jstNow = new Date(now + 9 * 60 * 60 * 1000);
+    const nextMidnight = Date.UTC(
+      jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + 1
+    ) - 9 * 60 * 60 * 1000;
+    setHoursLeft(Math.max(1, Math.ceil((nextMidnight - now) / 3_600_000)));
+  }, []);
+
+  if (!today) return null;
+
+  // 未投稿の場合は促すメッセージを表示
+  if (!lastPostDate) {
+    return (
+      <div style={{ margin: "0 20px 12px", background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "14px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.3 }}>まだ記録がありません</div>
+          <div style={{ fontSize: 11, color: "#A09080", marginTop: 3 }}>投稿を記録すると植物が育ちます</div>
+        </div>
+        <div style={{ fontSize: 32 }}>🌱</div>
+      </div>
+    );
+  }
+
+  const postedToday = lastPostDate === today;
+  const interval = freqDays / freqTimes;
+  const isDaily = interval <= 1;
+  const D = calcDaysUntilDead(stageProgress, lastPostDate, today, freqTimes, freqDays);
+
+  // D=1 かつ未投稿かつ毎日投稿 → 時間表示
+  const showHours = D === 1 && !postedToday && isDaily;
+  const num  = showHours ? hoursLeft : D;
+  const unit = showHours ? "時間" : "日";
+
+  type Cfg = { bg: string; numColor: string; labelColor: string; icon: string; sub: string; pulse: boolean; border: string };
+  let cfg: Cfg;
+
+  if (D === 0) {
+    cfg = { bg: "rgba(255,232,225,0.9)", numColor: RED_D,    labelColor: "#C06050", icon: "🥀", sub: "今すぐ投稿して復活させよう！",  pulse: true,  border: `1.5px solid rgba(138,64,48,0.3)`  };
+  } else if (showHours && hoursLeft <= 3) {
+    cfg = { bg: "rgba(255,232,225,0.9)", numColor: "#B04030", labelColor: "#C06050", icon: "🔥", sub: "今すぐ投稿してください！",       pulse: true,  border: `1.5px solid rgba(180,64,48,0.3)`  };
+  } else if (showHours) {
+    cfg = { bg: "rgba(255,240,220,0.9)", numColor: "#B06030", labelColor: "#A08050", icon: "⚠️", sub: "今日中に投稿してください！",     pulse: false, border: `1.5px solid rgba(196,100,40,0.25)` };
+  } else if (!postedToday && D <= 2) {
+    cfg = { bg: "rgba(255,240,220,0.9)", numColor: "#B06030", labelColor: "#A08050", icon: "⚠️", sub: "で枯れちゃう！早めに投稿を",     pulse: false, border: `1.5px solid rgba(196,100,40,0.25)` };
+  } else if (!postedToday && D <= 4) {
+    cfg = { bg: "rgba(255,248,228,0.9)", numColor: GOLD,      labelColor: "#9A8040", icon: "💧", sub: "で枯れちゃう",                  pulse: false, border: `1.5px solid rgba(196,146,42,0.2)`  };
+  } else if (!postedToday) {
+    cfg = { bg: "rgba(255,255,255,0.7)", numColor: DARK,      labelColor: "#A09080", icon: "🌱", sub: "で枯れちゃう",                  pulse: false, border: "none"                              };
+  } else {
+    // 投稿済み
+    const safe = D <= 3;
+    cfg = { bg: "rgba(230,244,232,0.85)", numColor: safe ? GOLD : GREEN, labelColor: safe ? "#9A8040" : "#5A8A6A", icon: "✅", sub: "今日は投稿済み ✓", pulse: false, border: `1.5px solid rgba(61,122,80,0.2)` };
+  }
+
+  return (
+    <div style={{
+      margin: "0 20px 12px",
+      background: cfg.bg,
+      borderRadius: 18,
+      padding: "14px 18px",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
+      border: cfg.border,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      animation: cfg.pulse ? "pulseGlow 2s ease-in-out infinite" : "none",
+    }}>
+      <div>
+        <div style={{ fontSize: 10, color: cfg.labelColor, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
+        {D === 0 ? (
+          <div style={{ fontSize: 17, fontWeight: 700, color: cfg.numColor, lineHeight: 1.3 }}>枯れています...</div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: cfg.labelColor, marginRight: 5 }}>あと</span>
+            <span style={{ fontSize: 40, fontWeight: 700, color: cfg.numColor, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{num}</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: cfg.numColor, marginLeft: 4 }}>{unit}</span>
+          </div>
+        )}
+        <div style={{ fontSize: 11, color: cfg.labelColor, marginTop: 3 }}>{cfg.sub}</div>
+      </div>
+      <div style={{ fontSize: 32, flexShrink: 0 }}>{cfg.icon}</div>
+    </div>
+  );
+}
 
 function isDamaged(stageProgress: number, stagePeak: number, stageMax: number): boolean {
   return stagePeak >= stageMax / 3 && stageProgress < stageMax / 3;
@@ -209,7 +330,7 @@ export default function HomePage() {
         setPosts(withOgp);
       }
     } catch {
-      setState({ streak: 0, avatarLevel: 0, avatarDamage: 0, formStage: 0, stageProgress: 0, stagePeak: 0, stageMax: 6, courseType: null, courseStartDate: null, freqTimes: 1, freqDays: 1 });
+      setState({ streak: 0, avatarLevel: 0, avatarDamage: 0, formStage: 0, stageProgress: 0, stagePeak: 0, stageMax: 6, courseType: null, courseStartDate: null, freqTimes: 1, freqDays: 1, lastPostDate: null });
     } finally { setLoading(false); }
   };
 
@@ -322,6 +443,14 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* countdown */}
+        <CountdownBanner
+          stageProgress={state.stageProgress}
+          lastPostDate={state.lastPostDate}
+          freqTimes={state.freqTimes}
+          freqDays={state.freqDays}
+        />
 
         {/* 最近の投稿 */}
         {posts.length > 0 && (

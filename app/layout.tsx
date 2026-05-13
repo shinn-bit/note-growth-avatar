@@ -83,7 +83,7 @@ export default function RootLayout({
       lang="ja"
       className={`${geistMono.variable} ${dancingScript.variable} ${dmSerifDisplay.variable} ${notoSansJP.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
