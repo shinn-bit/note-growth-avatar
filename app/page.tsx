@@ -160,7 +160,8 @@ function CountdownBanner({
 }
 
 function isDamaged(stageProgress: number, stagePeak: number, stageMax: number): boolean {
-  return stagePeak >= stageMax / 3 && stageProgress < stageMax / 3;
+  return (stageProgress === 0 && stagePeak > 0) ||
+         (stagePeak >= stageMax / 3 && stageProgress < stageMax / 3);
 }
 
 function getAvatarSrc(formStage: number, damaged: boolean): string {
