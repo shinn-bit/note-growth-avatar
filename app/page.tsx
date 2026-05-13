@@ -63,16 +63,14 @@ function calcDaysUntilDead(
 }
 
 function CountdownBanner({
-  stageProgress, lastPostDate, freqTimes, freqDays,
+  stageProgress, lastPostDate, freqTimes, freqDays, today,
 }: {
   stageProgress: number; lastPostDate: string | null;
-  freqTimes: number; freqDays: number;
+  freqTimes: number; freqDays: number; today: string | null;
 }) {
-  const [today, setToday] = useState<string | null>(null);
   const [hoursLeft, setHoursLeft] = useState(0);
 
   useEffect(() => {
-    setToday(getTodayJST());
     const now = Date.now();
     const jstNow = new Date(now + 9 * 60 * 60 * 1000);
     const nextMidnight = Date.UTC(
@@ -295,6 +293,8 @@ export default function HomePage() {
   const [showPost, setShowPost] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [today, setToday] = useState<string | null>(null);
+  useEffect(() => { setToday(getTodayJST()); }, []);
 
   async function handleReset() {
     if (!confirm("本当にリセットしますか？\nアバターの進捗がすべて消えます。")) return;
@@ -366,7 +366,10 @@ export default function HomePage() {
 
   if (!state || !state.courseType) return null;
 
-  const damaged = isDamaged(state.stageProgress, state.stagePeak, state.stageMax);
+  const daysLeft = (today && state.lastPostDate)
+    ? calcDaysUntilDead(state.stageProgress, state.lastPostDate, today, state.freqTimes, state.freqDays)
+    : null;
+  const damaged = isDamaged(state.stageProgress, state.stagePeak, state.stageMax) || daysLeft === 0;
   const accent  = damaged ? RED_D : GREEN;
   const stage   = Math.min(state.formStage, 5);
   const imgSrc  = getAvatarSrc(state.formStage, damaged);
@@ -451,6 +454,7 @@ export default function HomePage() {
           lastPostDate={state.lastPostDate}
           freqTimes={state.freqTimes}
           freqDays={state.freqDays}
+          today={today}
         />
 
         {/* 最近の投稿 */}
