@@ -10,20 +10,31 @@ type Props = {
 };
 
 export function PromoModal({ accessToken }: Props) {
-  const [visible, setVisible] = useState(false);
-  const [platform, setPlatform] = useState<Platform | null>(null);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(window as unknown as { MSStream?: unknown }).MSStream;
+    const isStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+    return isIOS && !isStandalone && !localStorage.getItem("note_ios_promo_dismissed");
+  });
+  const [platform, setPlatform] = useState<Platform | null>(() => {
+    if (typeof window === "undefined") return null;
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(window as unknown as { MSStream?: unknown }).MSStream;
+    const isStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+    return isIOS && !isStandalone && !localStorage.getItem("note_ios_promo_dismissed")
+      ? "ios"
+      : null;
+  });
 
   useEffect(() => {
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&
       !(window as unknown as { MSStream?: unknown }).MSStream;
-    const isStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
 
     if (isIOS) {
-      if (isStandalone) return;
-      if (localStorage.getItem("note_ios_promo_dismissed")) return;
-      setPlatform("ios");
-      setVisible(true);
       return;
     }
 

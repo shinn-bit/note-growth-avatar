@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# note tree frontend
 
-## Getting Started
+投稿継続をアバターの成長として可視化する note 継続サポートアプリのフロントエンドです。
 
-First, run the development server:
+## Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- NextAuth
+- Amazon Cognito
+- AWS API Gateway / Lambda backend
+- Web Push notifications
+
+## Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill `.env.local` with values from your deployed backend, Cognito app client, and VAPID key pair.
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Name | Required | Scope | Description |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | Yes | Browser/server | API Gateway base URL, without a trailing slash. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Yes | Browser | Public VAPID key used for push notification subscription. |
+| `NEXTAUTH_URL` | Yes | Server | App URL used by NextAuth. Use `http://localhost:3000` locally. |
+| `NEXTAUTH_SECRET` | Yes | Server | Random secret for NextAuth session/JWT signing. Keep private. |
+| `GUEST_JWT_SECRET` | Yes for guest mode | Server/backend | Secret used to sign guest JWTs. This must match the backend `GuestJwtSecret` / `GUEST_JWT_SECRET` value. |
+| `COGNITO_CLIENT_ID` | Yes | Server | Amazon Cognito app client ID. |
+| `COGNITO_CLIENT_SECRET` | Yes | Server | Amazon Cognito app client secret. Keep private. |
+| `COGNITO_ISSUER` | Currently optional | Server | Cognito issuer URL. Present in local env for compatibility; the current credentials flow uses client ID/secret directly. |
 
-## Learn More
+## Security Notes
 
-To learn more about Next.js, take a look at the following resources:
+- Do not commit `.env.local`, `.env.production`, `.vercel`, or other generated secret files.
+- `.env*` and `.vercel` are intentionally ignored by `.gitignore`.
+- Values exposed with `NEXT_PUBLIC_` are bundled for the browser. Do not put private secrets in `NEXT_PUBLIC_*` variables.
+- Keep `GUEST_JWT_SECRET` identical between the frontend host and the deployed Lambda backend, otherwise guest login will produce 401 responses from the API.
+- If a secret was ever committed or shared, rotate it before making the repository public.
+- The backend deployment config lives outside this frontend repository. If backend files are later published, sanitize files such as `samconfig.toml` and provide example config files instead of real secrets.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Useful Commands
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev
+npm run lint
+npm run build
+npx tsc --noEmit
+```

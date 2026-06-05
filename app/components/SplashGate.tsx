@@ -114,7 +114,10 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 }
 
 export function SplashGate({ children }: { children: React.ReactNode }) {
-  const [showSplash, setShowSplash]   = useState(false);
+  const [showSplash, setShowSplash]   = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !sessionStorage.getItem("splash_shown");
+  });
   const [showOB, setShowOB]           = useState(false);
   const [phase, setPhase]             = useState(0);
   const [leaving, setLeaving]         = useState(false);
@@ -122,13 +125,10 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const splashDone = sessionStorage.getItem("splash_shown");
     const obDone     = localStorage.getItem("onboarding_done");
 
-    if (!splashDone) {
+    if (showSplash) {
       sessionStorage.setItem("splash_shown", "1");
-      setShowSplash(true);
-
       const timers = [
         setTimeout(() => setPhase(1), 200),
         setTimeout(() => setPhase(2), 900),
@@ -140,10 +140,12 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
         }, 3600),
       ];
       return () => timers.forEach(clearTimeout);
-    } else if (!obDone) {
-      setShowOB(true);
     }
-  }, []);
+    if (!obDone) {
+      const timer = setTimeout(() => setShowOB(true), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [showSplash]);
 
   const handleObDone = () => {
     localStorage.setItem("onboarding_done", "1");

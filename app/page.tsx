@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NotificationToggle } from "./components/NotificationToggle";
 import { PromoModal } from "./components/PromoModal";
-import { BotanicalCorners } from "./components/BotanicalCorners";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -39,6 +38,27 @@ type AvatarState = {
 
 type PostCard = { date: string; url: string; title: string; image: string };
 
+type SubmitResult = {
+  alreadySubmitted?: boolean;
+  message?: string;
+  isMilestone?: boolean;
+  state?: {
+    streak: number;
+    avatarLevel: number;
+    avatarDamage: number;
+    formStage: number;
+    stageProgress: number;
+    stagePeak: number;
+    stageMax: number;
+  };
+};
+
+type EvolutionState = {
+  previousStage: number;
+  nextStage: number;
+  message: string;
+};
+
 function getTodayJST(): string {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const y = jst.getUTCFullYear();
@@ -47,14 +67,23 @@ function getTodayJST(): string {
   return `${y}-${m}-${d}`;
 }
 
+function getHoursUntilNextJSTMidnight(): number {
+  const now = Date.now();
+  const jstNow = new Date(now + 9 * 60 * 60 * 1000);
+  const nextMidnight = Date.UTC(
+    jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + 1
+  ) - 9 * 60 * 60 * 1000;
+  return Math.max(1, Math.ceil((nextMidnight - now) / 3_600_000));
+}
+
 function calcDaysUntilDead(
   stageProgress: number,
   lastPostDate: string,
   today: string,
   freqTimes: number,
   freqDays: number
-): number {
-  if (stageProgress <= 0) return 0;
+): number | null {
+  if (stageProgress <= 0) return null;
   const interval = freqDays / freqTimes;
   const dayDiff = Math.round(
     (new Date(today).getTime() - new Date(lastPostDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -68,16 +97,7 @@ function CountdownBanner({
   stageProgress: number; lastPostDate: string | null;
   freqTimes: number; freqDays: number; today: string | null;
 }) {
-  const [hoursLeft, setHoursLeft] = useState(0);
-
-  useEffect(() => {
-    const now = Date.now();
-    const jstNow = new Date(now + 9 * 60 * 60 * 1000);
-    const nextMidnight = Date.UTC(
-      jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + 1
-    ) - 9 * 60 * 60 * 1000;
-    setHoursLeft(Math.max(1, Math.ceil((nextMidnight - now) / 3_600_000)));
-  }, []);
+  const [hoursLeft] = useState(getHoursUntilNextJSTMidnight);
 
   if (!today) return null;
 
@@ -99,6 +119,23 @@ function CountdownBanner({
   const interval = freqDays / freqTimes;
   const isDaily = interval <= 1;
   const D = calcDaysUntilDead(stageProgress, lastPostDate, today, freqTimes, freqDays);
+
+  if (D === null) {
+    return (
+      <div style={{ margin: "0 20px 12px", background: postedToday ? "rgba(230,244,232,0.85)" : "rgba(255,255,255,0.7)", borderRadius: 18, padding: "14px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", border: postedToday ? `1.5px solid rgba(61,122,80,0.2)` : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 10, color: postedToday ? "#5A8A6A" : "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: postedToday ? GREEN : DARK, lineHeight: 1.3 }}>
+            {postedToday ? "今日は投稿済み ✓" : "次の投稿で育ちます"}
+          </div>
+          <div style={{ fontSize: 11, color: postedToday ? "#5A8A6A" : "#A09080", marginTop: 3 }}>
+            {postedToday ? "新しい成長が始まりました" : "投稿を記録して成長を進めよう"}
+          </div>
+        </div>
+        <div style={{ fontSize: 32 }}>{postedToday ? "🌿" : "🌱"}</div>
+      </div>
+    );
+  }
 
   // D=1 かつ未投稿かつ毎日投稿 → 時間表示
   const showHours = D === 1 && !postedToday && isDaily;
@@ -194,13 +231,102 @@ function GreenBtn({ label, onClick, accent, disabled = false }: {
   );
 }
 
-function PostModal({ stage, damaged, accessToken, onClose, onSuccess }: {
-  stage: number; damaged: boolean; accessToken: string;
-  onClose: () => void; onSuccess: () => void;
+function EvolutionOverlay({ evolution, onDone }: {
+  evolution: EvolutionState;
+  onDone: () => void;
+}) {
+  const previousStage = Math.min(evolution.previousStage, 5);
+  const nextStage = Math.min(evolution.nextStage, 5);
+
+  useEffect(() => {
+    const timer = setTimeout(onDone, 4400);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 160,
+      background: "rgba(234,227,214,0.98)",
+      display: "flex",
+      justifyContent: "center",
+      animation: "fadeIn 0.25s ease",
+    }}>
+      <div style={{
+        width: "100%",
+        maxWidth: 390,
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "28px",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 38%, rgba(196,146,42,0.18), transparent 42%)", pointerEvents: "none" }} />
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+          <div style={{ width: 116, height: 116, borderRadius: 20, overflow: "hidden", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.45, transform: "scale(0.92)" }}>
+            <img src={`/avatars/${IMG_NORMAL[previousStage]}.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+          <div style={{ fontSize: 24, color: GOLD, fontWeight: 700, animation: "fadeInUp 0.45s 0.15s ease both" }}>→</div>
+          <div style={{
+            width: 156,
+            height: 156,
+            borderRadius: 24,
+            overflow: "hidden",
+            border: `2px solid ${GOLD}`,
+            background: BG,
+            boxShadow: "0 0 34px rgba(196,146,42,0.38)",
+            animation: "evo-avatar-in 0.75s 0.25s ease both",
+          }}>
+            <img src={`/avatars/${IMG_NORMAL[nextStage]}.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+        </div>
+        <div style={{ position: "relative", fontSize: 30, fontWeight: 800, color: DARK, marginBottom: 8, animation: "fadeInUp 0.45s 0.55s ease both" }}>
+          進化しました！
+        </div>
+        <div style={{ position: "relative", fontSize: 14, fontWeight: 700, color: GOLD, marginBottom: 12, animation: "fadeInUp 0.45s 0.65s ease both" }}>
+          {STAGE_NAMES[previousStage]} から {STAGE_NAMES[nextStage]} へ
+        </div>
+        <div style={{ position: "relative", fontSize: 14, color: "#6A7068", lineHeight: 1.7, minHeight: 48, animation: "fadeInUp 0.45s 0.75s ease both" }}>
+          {evolution.message}
+        </div>
+        <button
+          onClick={onDone}
+          style={{
+            position: "relative",
+            marginTop: 24,
+            width: "100%",
+            maxWidth: 280,
+            height: 52,
+            border: "none",
+            borderRadius: 26,
+            background: GREEN,
+            color: "white",
+            fontSize: 15,
+            fontWeight: 700,
+            boxShadow: "0 6px 22px rgba(61,122,80,0.35)",
+            cursor: "pointer",
+            fontFamily: "var(--font-noto), sans-serif",
+            animation: "fadeInUp 0.45s 0.95s ease both",
+          }}
+        >
+          育った姿を見る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PostModal({ accessToken, onClose, onSuccess }: {
+  accessToken: string;
+  onClose: () => void; onSuccess: (result: SubmitResult) => void;
 }) {
   const [url, setUrl]     = useState("");
   const [loading, setLoading] = useState(false);
-  const [done, setDone]   = useState(false);
   const [error, setError] = useState("");
   const [ogp, setOgp]     = useState<{ title: string; image: string } | null>(null);
   const [ogpLoading, setOgpLoading] = useState(false);
@@ -233,50 +359,32 @@ function PostModal({ stage, damaged, accessToken, onClose, onSuccess }: {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "エラーが発生しました"); setLoading(false); return; }
-      setLoading(false);
-      setDone(true);
-      setTimeout(() => { onSuccess(); onClose(); }, 2000);
+      onSuccess(data);
     } catch { setError("通信エラーが発生しました"); setLoading(false); }
   };
-
-  const nextStage = Math.min(stage + 1, 5);
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,10,0.65)", display: "flex", alignItems: "flex-end", zIndex: 100, animation: "fadeIn 0.22s ease" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ width: "100%", maxWidth: 390, margin: "0 auto", background: BG, borderRadius: "28px 28px 0 0", padding: "24px 24px 52px", animation: "slideUp 0.35s cubic-bezier(0.32,0.72,0,1)" }}>
-        {done ? (
-          <div style={{ textAlign: "center", padding: "12px 0", animation: "celebPop 0.5s ease" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-              <div style={{ width: 150, height: 150, borderRadius: 20, overflow: "hidden", border: "1.5px solid rgba(200,185,155,0.55)", background: BG }}>
-                <img src={`/avatars/${IMG_NORMAL[nextStage]}.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              </div>
-            </div>
-            <div style={{ fontSize: 21, fontWeight: 700, color: DARK }}>投稿を記録しました！</div>
-            <div style={{ fontSize: 14, color: GREEN, marginTop: 5, fontWeight: 500 }}>木が少し育ちました 🌿</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>投稿を記録する</div>
+          <div onClick={onClose} style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}>✕</div>
+        </div>
+        <div style={{ fontSize: 13, color: "#8A9080", marginBottom: 9 }}>Note記事のURLを貼り付けてください</div>
+        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://note.com/..."
+          style={{ width: "100%", height: 50, borderRadius: 14, border: `1.5px solid ${url ? GREEN : "#C8C0B0"}`, background: "rgba(255,255,255,0.7)", padding: "0 14px", fontSize: 14, color: DARK, outline: "none", transition: "border 0.2s", boxSizing: "border-box", fontFamily: "var(--font-noto), sans-serif" }} />
+        {ogpLoading && <div style={{ fontSize: 12, color: "#A09080", marginTop: 8 }}>記事を取得中...</div>}
+        {!ogpLoading && ogp && (
+          <div style={{ display: "flex", gap: 10, alignItems: "center", background: "rgba(255,255,255,0.7)", borderRadius: 12, padding: "8px 12px", marginTop: 8 }}>
+            {ogp.image && <img src={ogp.image} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />}
+            <div style={{ fontSize: 12, color: DARK, fontWeight: 600, lineHeight: 1.4 }}>{ogp.title}</div>
           </div>
-        ) : (
-          <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>投稿を記録する</div>
-              <div onClick={onClose} style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}>✕</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#8A9080", marginBottom: 9 }}>Note記事のURLを貼り付けてください</div>
-            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://note.com/..."
-              style={{ width: "100%", height: 50, borderRadius: 14, border: `1.5px solid ${url ? GREEN : "#C8C0B0"}`, background: "rgba(255,255,255,0.7)", padding: "0 14px", fontSize: 14, color: DARK, outline: "none", transition: "border 0.2s", boxSizing: "border-box", fontFamily: "var(--font-noto), sans-serif" }} />
-            {ogpLoading && <div style={{ fontSize: 12, color: "#A09080", marginTop: 8 }}>記事を取得中...</div>}
-            {!ogpLoading && ogp && (
-              <div style={{ display: "flex", gap: 10, alignItems: "center", background: "rgba(255,255,255,0.7)", borderRadius: 12, padding: "8px 12px", marginTop: 8 }}>
-                {ogp.image && <img src={ogp.image} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />}
-                <div style={{ fontSize: 12, color: DARK, fontWeight: 600, lineHeight: 1.4 }}>{ogp.title}</div>
-              </div>
-            )}
-            {error && <div style={{ fontSize: 13, color: "#A04030", marginTop: 8 }}>{error}</div>}
-            <div style={{ marginTop: 14 }}>
-              <GreenBtn label={loading ? "記録中 …" : "記録する 🌱"} onClick={submit} disabled={!url.trim() || loading} />
-            </div>
-          </>
         )}
+        {error && <div style={{ fontSize: 13, color: "#A04030", marginTop: 8 }}>{error}</div>}
+        <div style={{ marginTop: 14 }}>
+          <GreenBtn label={loading ? "記録中 …" : "記録する 🌱"} onClick={submit} disabled={!url.trim() || loading} />
+        </div>
       </div>
     </div>
   );
@@ -291,10 +399,12 @@ export default function HomePage() {
   const [resetting, setResetting] = useState(false);
   const [imgKey, setImgKey]   = useState(0);
   const [showPost, setShowPost] = useState(false);
+  const [progressAnimating, setProgressAnimating] = useState(false);
+  const [evolution, setEvolution] = useState<EvolutionState | null>(null);
+  const pendingStateRef = useRef<AvatarState | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [today, setToday] = useState<string | null>(null);
-  useEffect(() => { setToday(getTodayJST()); }, []);
+  const [today] = useState(getTodayJST);
 
   async function handleReset() {
     if (!confirm("本当にリセットしますか？\nアバターの進捗がすべて消えます。")) return;
@@ -349,9 +459,68 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handlePostSuccess = () => {
-    setImgKey(k => k + 1);
+  const refreshAfterPost = () => {
     if (session?.accessToken) fetchAll(session.accessToken);
+  };
+
+  const handlePostSuccess = (result: SubmitResult) => {
+    setShowPost(false);
+    if (!state || !result.state || result.alreadySubmitted) {
+      refreshAfterPost();
+      return;
+    }
+
+    const nextState: AvatarState = {
+      ...state,
+      ...result.state,
+      lastPostDate: today,
+    };
+    const evolved = nextState.formStage > state.formStage || !!result.isMilestone;
+
+    setProgressAnimating(true);
+
+    if (evolved) {
+      pendingStateRef.current = nextState;
+      setState({
+        ...state,
+        stageProgress: state.stageMax,
+        stagePeak: Math.max(state.stagePeak, state.stageMax),
+        streak: nextState.streak,
+        avatarLevel: nextState.avatarLevel,
+        avatarDamage: nextState.avatarDamage,
+        lastPostDate: today,
+      });
+
+      setTimeout(() => {
+        setProgressAnimating(false);
+        setEvolution({
+          previousStage: state.formStage,
+          nextStage: nextState.formStage,
+          message: result.message || "継続の成果で植物が進化しました！",
+        });
+      }, 950);
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      setState(nextState);
+      setImgKey(k => k + 1);
+    });
+    setTimeout(() => {
+      setProgressAnimating(false);
+      refreshAfterPost();
+    }, 1100);
+  };
+
+  const finishEvolution = () => {
+    const nextState = pendingStateRef.current;
+    pendingStateRef.current = null;
+    setEvolution(null);
+    if (nextState) {
+      setState(nextState);
+      setImgKey(k => k + 1);
+    }
+    refreshAfterPost();
   };
 
   if (status === "loading" || loading) {
@@ -370,7 +539,6 @@ export default function HomePage() {
     ? calcDaysUntilDead(state.stageProgress, state.lastPostDate, today, state.freqTimes, state.freqDays)
     : null;
   const damaged = isDamaged(state.stageProgress, state.stagePeak, state.stageMax) || daysLeft === 0;
-  const accent  = damaged ? RED_D : GREEN;
   const stage   = Math.min(state.formStage, 5);
   const imgSrc  = getAvatarSrc(state.formStage, damaged);
 
@@ -440,7 +608,14 @@ export default function HomePage() {
               <div style={{ fontSize: 11, fontWeight: 700, color: damaged ? RED_D : GREEN }}>{state.stageProgress}/{state.stageMax}</div>
             </div>
             <div style={{ height: 7, background: "#DDD8CC", borderRadius: 4, overflow: "hidden", marginTop: 6 }}>
-              <div style={{ height: 7, width: `${state.stageMax > 0 ? Math.min(100, (state.stageProgress / state.stageMax) * 100) : 0}%`, background: damaged ? "linear-gradient(90deg,#8A4030,#C06050)" : `linear-gradient(90deg,${GREEN},#70B070)`, borderRadius: 4, transition: "width 0.7s cubic-bezier(0.34,1.56,0.64,1)" }} />
+              <div style={{
+                height: 7,
+                width: `${state.stageMax > 0 ? Math.min(100, (state.stageProgress / state.stageMax) * 100) : 0}%`,
+                background: damaged ? "linear-gradient(90deg,#8A4030,#C06050)" : `linear-gradient(90deg,${GREEN},#70B070)`,
+                borderRadius: 4,
+                transition: "width 0.9s cubic-bezier(0.22,1,0.36,1)",
+                boxShadow: progressAnimating ? `0 0 14px ${damaged ? "rgba(192,96,80,0.55)" : "rgba(61,122,80,0.55)"}` : "none",
+              }} />
             </div>
             <div style={{ fontSize: 11, color: "#9A9080", marginTop: 5 }}>
               {stage < 5 ? `あと${state.stageMax - state.stageProgress}回で「${STAGE_NAMES[stage + 1]}」へ` : "🏆 最終形態に到達！"}
@@ -500,11 +675,16 @@ export default function HomePage() {
       {/* Post modal */}
       {showPost && session?.accessToken && (
         <PostModal
-          stage={stage}
-          damaged={damaged}
           accessToken={session.accessToken}
           onClose={() => setShowPost(false)}
           onSuccess={handlePostSuccess}
+        />
+      )}
+
+      {evolution && (
+        <EvolutionOverlay
+          evolution={evolution}
+          onDone={finishEvolution}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type LastMessage = {
@@ -16,19 +16,17 @@ type LastMessage = {
 
 // ── 紙吹雪コンポーネント ──────────────────────────────────────
 function Confetti() {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 48 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        dx: (Math.random() - 0.5) * 240,
-        rot: Math.random() * 720,
-        dur: 1.6 + Math.random() * 1.2,
-        delay: Math.random() * 0.7,
-        color: ["#fbbf24","#34d399","#60a5fa","#f472b6","#a78bfa","#5a7a5a","#fb923c"][i % 7],
-        w: 6 + Math.random() * 9,
-      })),
-    []
+  const [pieces] = useState(() =>
+    Array.from({ length: 48 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      dx: (Math.random() - 0.5) * 240,
+      rot: Math.random() * 720,
+      dur: 1.6 + Math.random() * 1.2,
+      delay: Math.random() * 0.7,
+      color: ["#fbbf24","#34d399","#60a5fa","#f472b6","#a78bfa","#5a7a5a","#fb923c"][i % 7],
+      w: 6 + Math.random() * 9,
+    }))
   );
 
   return (
@@ -154,16 +152,17 @@ function EvolutionScreen({ msg, onDone }: { msg: LastMessage; onDone: () => void
 // ── メインコンポーネント ──────────────────────────────────────
 export default function ResultPage() {
   const router = useRouter();
-  const [msg, setMsg] = useState<LastMessage | null>(null);
+  const [msg] = useState<LastMessage | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem("note_avatar_last_message");
+    return raw ? JSON.parse(raw) : null;
+  });
 
   useEffect(() => {
-    const raw = localStorage.getItem("note_avatar_last_message");
-    if (raw) {
-      setMsg(JSON.parse(raw));
-    } else {
+    if (!msg) {
       router.replace("/");
     }
-  }, [router]);
+  }, [msg, router]);
 
   function handleDone() {
     localStorage.removeItem("note_avatar_last_message");

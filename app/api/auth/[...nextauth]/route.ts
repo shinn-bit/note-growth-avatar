@@ -18,7 +18,7 @@ function computeSecretHash(username: string): string {
 }
 
 function signGuestJwt(sub: string): string {
-  const secret = process.env.NEXTAUTH_SECRET!;
+  const secret = process.env.GUEST_JWT_SECRET || process.env.NEXTAUTH_SECRET!;
   const header  = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
   const now     = Math.floor(Date.now() / 1000);
   const payload = Buffer.from(JSON.stringify({
