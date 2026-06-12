@@ -47,15 +47,21 @@ export function ShareButton({
     <div
       onClick={sharing ? undefined : handleShare}
       style={{
-        width: 32, height: 32, borderRadius: 16,
+        display: "flex", alignItems: "center", gap: 5,
+        height: 32, padding: "0 12px", borderRadius: 16,
         background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 14, cursor: sharing ? "default" : "pointer",
+        fontSize: 12, fontWeight: 700, color: "#1A1A18",
+        cursor: sharing ? "default" : "pointer",
         border: "1px solid rgba(0,0,0,0.08)", opacity: sharing ? 0.6 : 1,
       }}
       title="育成記録をシェア"
     >
-      {sharing ? "…" : "📤"}
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+        <path d="M16 6l-4-4-4 4" />
+        <path d="M12 2v13" />
+      </svg>
+      {sharing ? "…" : "シェア"}
     </div>
   );
 }
