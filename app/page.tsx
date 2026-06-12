@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NotificationToggle } from "./components/NotificationToggle";
 import { PromoModal } from "./components/PromoModal";
+import { ShareButton } from "./components/ShareButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -560,6 +561,7 @@ export default function HomePage() {
               <div style={{ fontSize: 11, fontWeight: 700, color: damaged ? "#C04030" : "#4A8A5A", background: damaged ? "rgba(255,240,236,0.92)" : "rgba(230,244,232,0.92)", padding: "4px 10px", borderRadius: 12, border: `1px solid ${damaged ? "#E8B0A0" : "#B4D4B8"}`, backdropFilter: "blur(4px)" }}>
                 {damaged ? "🥀 ダメージ" : "🌿 正常"}
               </div>
+              <ShareButton imgSrc={imgSrc} stageName={STAGE_NAMES[stage]} stageDesc={STAGE_DESC[stage]} streak={state.streak} />
               <div ref={settingsRef} style={{ position: "relative" }}>
                 <div onClick={() => setShowSettings(v => !v)}
                   style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", border: "1px solid rgba(0,0,0,0.08)" }}>⚙</div>
