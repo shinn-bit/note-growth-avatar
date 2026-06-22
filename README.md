@@ -7,9 +7,9 @@
 ## スクリーンショット
 
 <div align="center">
-  <img src="docs/screenshots/splash.png" width="220" alt="スプラッシュ画面" />
+  <img src="public/screenshots/splash.png" width="220" alt="スプラッシュ画面" />
   &nbsp;&nbsp;
-  <img src="docs/screenshots/home.png" width="220" alt="ホーム画面（アバター成長）" />
+  <img src="public/screenshots/home.png" width="220" alt="ホーム画面（アバター成長）" />
 </div>
 
 > 左：スプラッシュ画面　右：アバター成長ホーム画面（STREAK 7日、次のステージまであと1回）

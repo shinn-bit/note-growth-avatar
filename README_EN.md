@@ -7,9 +7,9 @@
 ## Screenshots
 
 <div align="center">
-  <img src="docs/screenshots/splash.png" width="220" alt="Splash screen" />
+  <img src="public/screenshots/splash.png" width="220" alt="Splash screen" />
   &nbsp;&nbsp;
-  <img src="docs/screenshots/home.png" width="220" alt="Home screen – avatar growth" />
+  <img src="public/screenshots/home.png" width="220" alt="Home screen – avatar growth" />
 </div>
 
 > Left: Splash screen　Right: Home screen showing avatar at stage 4 (STREAK 7, one post away from the next stage)
