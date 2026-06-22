@@ -1,68 +1,127 @@
-# note tree frontend
+# note tree 🌱
 
-投稿継続をアバターの成長として可視化する note 継続サポートアプリのフロントエンドです。
+**継続を、成長に変える** — noteの投稿継続をアバターの成長として可視化する、創作モチベーション支援Webアプリです。
 
-## Stack
+---
 
-- Next.js App Router
-- React
-- TypeScript
-- NextAuth
-- Amazon Cognito
-- AWS API Gateway / Lambda backend
-- Web Push notifications
+## スクリーンショット
 
-## Setup
+<div align="center">
+  <img src="docs/screenshots/splash.png" width="220" alt="スプラッシュ画面" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/home.png" width="220" alt="ホーム画面（アバター成長）" />
+</div>
 
-Install dependencies:
+> 左：スプラッシュ画面　右：アバター成長ホーム画面（STREAK 7日、次のステージまであと1回）
+
+---
+
+## アプリ概要
+
+noteに記事を投稿するたびに、アプリ内の植物アバターが成長します。  
+継続を「木を育てる体験」として可視化することで、「もう1記事書きたい」という気持ちを自然に引き出します。
+
+| ステージ | 状態 |
+|----------|------|
+| 🌰 種 | 何も始まっていない |
+| 🌱 発芽 | ようやく芽が出た |
+| 🍃 若葉 | 安定して育ち始めた |
+| 🌸 小さな植物 | 青い花が咲いてきた |
+| 🌳 小さな木 | 資産感が出てきた |
+| 🌲 大樹（藤） | 藤の大樹になった！ |
+
+投稿をさぼると植物がダメージを受け、逆に続けるほど健康的に育ちます。
+
+---
+
+## 主な機能
+
+- **アバター成長の可視化** — 6ステージ × 正常/ダメージの12種類の植物画像
+- **ストリーク管理** — 連続投稿日数のカウントと次のレベルまでの進捗表示
+- **コース設定** — 1ヶ月 / 3ヶ月コース・投稿頻度を自由に設定
+- **OGPプレビュー** — note URLを貼るだけで記事サムネイルと題名を自動取得
+- **投稿履歴** — 過去の投稿をカード形式で振り返り
+- **Webプッシュ通知** — 投稿忘れを防ぐリマインダー通知
+- **SNSシェア** — 成長状況を画像付きでシェア
+- **ゲストモード** — アカウント登録なしで試用可能
+
+---
+
+## 技術スタック
+
+| カテゴリ | 使用技術 |
+|----------|---------|
+| フロントエンド | Next.js 16 (App Router) / React 19 / TypeScript |
+| スタイリング | Tailwind CSS v4 / CSS Modules |
+| 認証 | NextAuth v4 + Amazon Cognito |
+| バックエンド | AWS API Gateway + AWS Lambda（サーバーレス） |
+| 通知 | Web Push API（VAPID） |
+| ホスティング | Vercel |
+
+---
+
+## セットアップ
+
+### 依存パッケージのインストール
 
 ```bash
 npm install
 ```
 
-Create a local environment file:
+### 環境変数の設定
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill `.env.local` with values from your deployed backend, Cognito app client, and VAPID key pair.
+`.env.local` に以下の値を設定してください：
 
-Run the development server:
+| 変数名 | 必須 | 説明 |
+|--------|------|------|
+| `NEXT_PUBLIC_API_URL` | ✅ | API Gateway のベース URL（末尾スラッシュなし） |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | ✅ | Web Push 用 VAPID 公開鍵 |
+| `NEXTAUTH_URL` | ✅ | アプリの URL（ローカルは `http://localhost:3000`） |
+| `NEXTAUTH_SECRET` | ✅ | NextAuth のセッション署名用シークレット |
+| `GUEST_JWT_SECRET` | ゲストモード使用時 | ゲスト JWT 署名用シークレット（バックエンドと同一値） |
+| `COGNITO_CLIENT_ID` | ✅ | Amazon Cognito アプリクライアント ID |
+| `COGNITO_CLIENT_SECRET` | ✅ | Amazon Cognito アプリクライアントシークレット |
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000.
+[http://localhost:3000](http://localhost:3000) を開いてください。
 
-## Environment Variables
+---
 
-| Name | Required | Scope | Description |
-| --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Yes | Browser/server | API Gateway base URL, without a trailing slash. |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Yes | Browser | Public VAPID key used for push notification subscription. |
-| `NEXTAUTH_URL` | Yes | Server | App URL used by NextAuth. Use `http://localhost:3000` locally. |
-| `NEXTAUTH_SECRET` | Yes | Server | Random secret for NextAuth session/JWT signing. Keep private. |
-| `GUEST_JWT_SECRET` | Yes for guest mode | Server/backend | Secret used to sign guest JWTs. This must match the backend `GuestJwtSecret` / `GUEST_JWT_SECRET` value. |
-| `COGNITO_CLIENT_ID` | Yes | Server | Amazon Cognito app client ID. |
-| `COGNITO_CLIENT_SECRET` | Yes | Server | Amazon Cognito app client secret. Keep private. |
-| `COGNITO_ISSUER` | Currently optional | Server | Cognito issuer URL. Present in local env for compatibility; the current credentials flow uses client ID/secret directly. |
-
-## Security Notes
-
-- Do not commit `.env.local`, `.env.production`, `.vercel`, or other generated secret files.
-- `.env*` and `.vercel` are intentionally ignored by `.gitignore`.
-- Values exposed with `NEXT_PUBLIC_` are bundled for the browser. Do not put private secrets in `NEXT_PUBLIC_*` variables.
-- Keep `GUEST_JWT_SECRET` identical between the frontend host and the deployed Lambda backend, otherwise guest login will produce 401 responses from the API.
-- If a secret was ever committed or shared, rotate it before making the repository public.
-- The backend deployment config lives outside this frontend repository. If backend files are later published, sanitize files such as `samconfig.toml` and provide example config files instead of real secrets.
-
-## Useful Commands
+## 便利なコマンド
 
 ```bash
-npm run dev
-npm run lint
-npm run build
-npx tsc --noEmit
+npm run dev      # 開発サーバー起動
+npm run build    # プロダクションビルド
+npm run lint     # ESLint
+npx tsc --noEmit # 型チェック
 ```
+
+---
+
+## セキュリティ
+
+- `.env.local` / `.env.production` / `.vercel` はコミットしないでください（`.gitignore` で除外済み）
+- `NEXT_PUBLIC_` プレフィックスの変数はブラウザにバンドルされます。プライベートなシークレットは設定しないでください
+- `GUEST_JWT_SECRET` はフロントエンドとバックエンドで同一の値にしてください
+- シークレットを誤ってコミットした場合は、リポジトリを公開する前に必ずローテーションしてください
+
+---
+
+## English README
+
+👉 [README\_EN.md](./README_EN.md)
+
+---
+
+## ライセンス
+
+MIT
