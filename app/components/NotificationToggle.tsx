@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { subscribePush, unsubscribePush, isPushSubscribed } from "../lib/push";
 
 type Props = {
-  accessToken: string;
+  deviceId: string;
 };
 
-export function NotificationToggle({ accessToken }: Props) {
+export function NotificationToggle({ deviceId }: Props) {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -25,7 +25,6 @@ export function NotificationToggle({ accessToken }: Props) {
     isPushSubscribed().then(setSubscribed);
   }, []);
 
-  // 非対応ブラウザは何も表示しない
   if (!supported) return null;
 
   async function handleToggle() {
@@ -39,7 +38,7 @@ export function NotificationToggle({ accessToken }: Props) {
           setDenied(true);
           return;
         }
-        const ok = await subscribePush(accessToken);
+        const ok = await subscribePush(deviceId);
         if (ok) {
           setSubscribed(true);
         } else if ((Notification.permission as string) === "denied") {

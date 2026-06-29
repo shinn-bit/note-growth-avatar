@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getDeviceId } from "../lib/deviceId";
 import { BotanicalCorners } from "../components/BotanicalCorners";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -14,7 +14,6 @@ const DARK  = "#1A1A18";
 type OgpData = { title: string; image: string };
 
 export default function SubmitPage() {
-  const { data: session } = useSession();
   const router = useRouter();
   const [url, setUrl]       = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,13 +52,11 @@ export default function SubmitPage() {
     setLoading(true);
 
     try {
+      const deviceId = getDeviceId();
       const res = await fetch(`${API_URL}/submit`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify({ url }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId, url }),
       });
 
       const data = await res.json();
@@ -108,7 +105,6 @@ export default function SubmitPage() {
       <BotanicalCorners phase={3} />
 
       <div style={{ position: "relative", zIndex: 2, padding: "0 0 80px" }}>
-        {/* header */}
         <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>投稿を記録する</div>
           <div
@@ -137,7 +133,6 @@ export default function SubmitPage() {
               onBlur={() => setFocused(false)}
             />
 
-            {/* OGP preview */}
             {ogpLoading && (
               <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 14, padding: "12px 14px", fontSize: 13, color: "#A09080" }}>
                 記事を取得中...
@@ -179,7 +174,6 @@ export default function SubmitPage() {
           </form>
         </div>
 
-        {/* avatar hint */}
         <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
           <div style={{ width: 120, height: 120, borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.7 }}>
             <img src="/avatars/stage2_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />

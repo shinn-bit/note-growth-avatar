@@ -8,7 +8,6 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0))).buffer as ArrayBuffer;
 }
 
-/** 現在の購読状態を返す。非対応ブラウザは false */
 export async function isPushSubscribed(): Promise<boolean> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
   try {
@@ -20,8 +19,7 @@ export async function isPushSubscribed(): Promise<boolean> {
   }
 }
 
-/** 通知許可を求めてサーバーに購読情報を送る。戻り値は成功したか */
-export async function subscribePush(accessToken: string): Promise<boolean> {
+export async function subscribePush(deviceId: string): Promise<boolean> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
 
   const permission = await Notification.requestPermission();
@@ -39,11 +37,8 @@ export async function subscribePush(accessToken: string): Promise<boolean> {
 
     await fetch(`${API_URL}/subscribe`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ subscription: sub.toJSON() }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, subscription: sub.toJSON() }),
     });
     return true;
   } catch {
@@ -51,7 +46,6 @@ export async function subscribePush(accessToken: string): Promise<boolean> {
   }
 }
 
-/** 購読を解除する */
 export async function unsubscribePush(): Promise<void> {
   if (!("serviceWorker" in navigator)) return;
   try {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getDeviceId } from "../lib/deviceId";
 import styles from "../styles/setup.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -41,7 +41,6 @@ function freqSummary(freqTimes: number, freqDays: number): string {
 }
 
 export default function SetupPage() {
-  const { data: session } = useSession();
   const router = useRouter();
 
   const [courseType, setCourseType] = useState<"1month" | "3month" | null>(null);
@@ -60,14 +59,12 @@ export default function SetupPage() {
 
   function handleCustomDays(val: number) {
     setFreqDays(val);
-    // freqTimes cannot exceed freqDays
     if (freqTimes > val) setFreqTimes(val);
     setSelectedPreset("custom");
   }
 
   function handleCustomTimes(val: number) {
     setFreqTimes(val);
-    // freqDays cannot be less than freqTimes
     if (freqDays < val) setFreqDays(val);
     setSelectedPreset("custom");
   }
@@ -81,13 +78,11 @@ export default function SetupPage() {
     setLoading(true);
 
     try {
+      const deviceId = getDeviceId();
       const res = await fetch(`${API_URL}/setup`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify({ courseType, freqTimes, freqDays }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId, courseType, freqTimes, freqDays }),
       });
 
       if (!res.ok) {
@@ -112,7 +107,6 @@ export default function SetupPage() {
         <p className={styles.subtitle}>あなたのペースで続けられるプランを選ぼう</p>
       </div>
 
-      {/* Course selection */}
       <div className={styles.section}>
         <p className={styles.sectionLabel}>チャレンジ期間</p>
         <div className={styles.courseGrid}>
@@ -131,7 +125,6 @@ export default function SetupPage() {
         </div>
       </div>
 
-      {/* Frequency selection */}
       <div className={styles.section}>
         <p className={styles.sectionLabel}>投稿ペース</p>
         <div className={styles.presets}>
@@ -170,7 +163,6 @@ export default function SetupPage() {
         </div>
       </div>
 
-      {/* Summary */}
       <div className={styles.summary}>
         {courseType
           ? `${courseType === "1month" ? "1ヶ月" : "3ヶ月"}コース・${freqSummary(freqTimes, freqDays)}`

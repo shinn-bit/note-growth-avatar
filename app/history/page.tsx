@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getDeviceId } from "../lib/deviceId";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -36,7 +35,6 @@ function PostCard({ post, ogp }: { post: Post; ogp: OgpData | null }) {
       rel="noopener noreferrer"
       className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
     >
-      {/* サムネイル */}
       <div className="w-full h-36 bg-[#ede8e0] overflow-hidden">
         {ogp?.image ? (
           <img
@@ -51,7 +49,6 @@ function PostCard({ post, ogp }: { post: Post; ogp: OgpData | null }) {
         )}
       </div>
 
-      {/* テキスト */}
       <div className="p-3 flex flex-col gap-1">
         <p className="text-xs text-gray-400">{dateLabel}</p>
         <p className="text-sm font-medium text-gray-800 leading-snug line-clamp-2">
@@ -64,30 +61,20 @@ function PostCard({ post, ogp }: { post: Post; ogp: OgpData | null }) {
 }
 
 export default function HistoryPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
   const [posts, setPosts] = useState<Post[]>([]);
   const [ogpMap, setOgpMap] = useState<Record<string, OgpData>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status !== "authenticated" || !session?.accessToken) return;
+    const deviceId = getDeviceId();
 
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/history`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        });
+        const res = await fetch(`${API_URL}/history?deviceId=${encodeURIComponent(deviceId)}`);
         if (!res.ok) return;
         const data = await res.json();
         setPosts(data.posts ?? []);
 
-        // OGPを並列取得
         const entries = await Promise.all(
           (data.posts ?? []).map(async (p: Post) => {
             const ogp = await fetchOgp(p.url);
@@ -101,9 +88,9 @@ export default function HistoryPage() {
     };
 
     load();
-  }, [status, session]);
+  }, []);
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-400 text-sm">読み込み中...</p>
@@ -113,7 +100,6 @@ export default function HistoryPage() {
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-[#f5f0eb] px-4 py-10 gap-6">
-      {/* Header */}
       <div className="w-full max-w-xs flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-800">投稿履歴</h1>
         <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
@@ -121,7 +107,6 @@ export default function HistoryPage() {
         </Link>
       </div>
 
-      {/* 合計 */}
       <div className="w-full max-w-xs bg-white rounded-2xl px-5 py-4 shadow-sm flex items-center gap-3">
         <span className="text-3xl">🌳</span>
         <div>
@@ -130,16 +115,15 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* 投稿リスト */}
       {posts.length === 0 ? (
         <div className="w-full max-w-xs text-center py-16">
           <p className="text-5xl mb-4">🌱</p>
           <p className="text-gray-500 text-sm">まだ投稿がありません</p>
           <Link
-            href="/submit"
+            href="/"
             className="mt-4 inline-block text-sm text-[#5a7a5a] font-medium"
           >
-            最初の投稿を記録する →
+            ホームに戻る →
           </Link>
         </div>
       ) : (

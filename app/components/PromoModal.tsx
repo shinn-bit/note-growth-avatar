@@ -6,10 +6,10 @@ import { subscribePush, isPushSubscribed } from "../lib/push";
 type Platform = "ios" | "other";
 
 type Props = {
-  accessToken: string;
+  deviceId: string;
 };
 
-export function PromoModal({ accessToken }: Props) {
+export function PromoModal({ deviceId }: Props) {
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
     const isIOS =
@@ -56,7 +56,7 @@ export function PromoModal({ accessToken }: Props) {
   }
 
   async function handleEnableNotification() {
-    await subscribePush(accessToken);
+    await subscribePush(deviceId);
     localStorage.setItem("note_noti_promo_dismissed", "1");
     setVisible(false);
   }
@@ -66,7 +66,6 @@ export function PromoModal({ accessToken }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-6">
       <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <p className="text-sm font-bold text-gray-700">
             {platform === "ios" ? "ホーム画面に追加しよう" : "投稿リマインドを受け取ろう"}
@@ -80,7 +79,6 @@ export function PromoModal({ accessToken }: Props) {
           </button>
         </div>
 
-        {/* 非iOS: 動画 */}
         {platform === "other" && (
           <video
             src="/demo/notification.mp4"
@@ -92,7 +90,6 @@ export function PromoModal({ accessToken }: Props) {
           />
         )}
 
-        {/* iOS: ホーム画面追加手順画像 */}
         {platform === "ios" && (
           <img
             src="/demo/notification.png"
@@ -101,7 +98,6 @@ export function PromoModal({ accessToken }: Props) {
           />
         )}
 
-        {/* CTA */}
         <div className="px-4 pb-5 pt-3 flex flex-col gap-2">
           {platform === "other" && (
             <button
