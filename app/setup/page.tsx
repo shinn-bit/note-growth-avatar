@@ -68,6 +68,7 @@ export default function SetupPage() {
         setError(data.error || "エラーが発生しました");
         return;
       }
+      localStorage.setItem("note_avatar_setup_done", "true");
       router.push("/");
     } catch {
       setError("通信エラーが発生しました");

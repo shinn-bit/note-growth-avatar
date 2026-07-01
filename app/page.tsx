@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getDeviceId } from "./lib/deviceId";
 import { NotificationToggle } from "./components/NotificationToggle";
@@ -245,6 +246,7 @@ function PostModal({ deviceId, onClose, onSuccess }: {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [deviceId, setDeviceId] = useState("");
   const [state, setState]   = useState<PlantState | null>(null);
   const [posts, setPosts]   = useState<PostCard[]>([]);
@@ -266,7 +268,8 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deviceId }),
       });
-      window.location.reload();
+      localStorage.removeItem("note_avatar_setup_done");
+      router.push("/setup");
     } finally { setResetting(false); }
   }
 
@@ -298,6 +301,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem("note_avatar_setup_done")) {
+      router.replace("/setup");
+      return;
+    }
     const id = getDeviceId();
     setDeviceId(id);
     fetchAll(id);
