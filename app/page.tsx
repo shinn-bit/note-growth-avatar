@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getDeviceId } from "./lib/deviceId";
 import { NotificationToggle } from "./components/NotificationToggle";
-import { PromoModal } from "./components/PromoModal";
-import { ShareButton } from "./components/ShareButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -14,50 +11,40 @@ const BG    = "#EAE3D6";
 const GREEN = "#3D7A50";
 const GOLD  = "#C4922A";
 const DARK  = "#1A1A18";
-const RED_D = "#8A4030";
 
-const STAGE_NAMES = ["種", "発芽", "若葉", "小さな植物", "小さな木", "大樹（藤）"];
-const STAGE_DESC  = ["何も始まっていない", "ようやく芽が出た", "安定して育ち始めた", "青い花が咲いてきた", "資産感が出てきた", "藤の大樹になった！"];
+// Plant type 0 uses existing stage images; types 1-6 use {type}-{stage}.png
+function getPlantImageSrc(plantType: number, stage: number): string {
+  if (plantType === 0) {
+    const stageNames = ["stage1_normal", "stage2_normal", "stage3_normal", "stage4_normal", "stage5_normal"];
+    return `/avatars/${stageNames[Math.min(stage - 1, 4)]}.png`;
+  }
+  return `/avatars/${plantType}-${Math.min(stage, 5)}.png`;
+}
 
-const IMG_NORMAL  = ["stage0_normal", "stage1_normal", "stage2_normal", "stage3_normal", "stage4_normal", "stage5_normal"];
-const IMG_DAMAGED = ["stage0_normal", "stage1_damaged", "stage2_damaged", "stage3_damaged", "stage4_damaged", "stage5_damaged"];
+const PLANT_NAMES = ["ふじの木", "植物A", "植物B", "植物C", "植物D", "植物E", "植物F"];
 
-type AvatarState = {
+type PlantState = {
   streak: number;
-  avatarLevel: number;
-  avatarDamage: number;
-  formStage: number;
-  stageProgress: number;
-  stagePeak: number;
-  stageMax: number;
-  courseType: "1month" | "3month" | null;
-  courseStartDate: string | null;
+  currentPlantType: number;
+  currentPlantStage: number;
+  completedPlants: number[];
+  lastPostDate: string | null;
   freqTimes: number;
   freqDays: number;
-  lastPostDate: string | null;
 };
 
 type PostCard = { date: string; url: string; title: string; image: string };
 
 type SubmitResult = {
   alreadySubmitted?: boolean;
-  message?: string;
-  isMilestone?: boolean;
-  state?: {
-    streak: number;
-    avatarLevel: number;
-    avatarDamage: number;
-    formStage: number;
-    stageProgress: number;
-    stagePeak: number;
-    stageMax: number;
-  };
+  completedPlantType: number | null;
+  newPlantType: number | null;
+  state?: PlantState;
 };
 
-type EvolutionState = {
-  previousStage: number;
-  nextStage: number;
-  message: string;
+type GachaState = {
+  completedPlantType: number;
+  newPlantType: number;
 };
 
 function getTodayJST(): string {
@@ -68,155 +55,22 @@ function getTodayJST(): string {
   return `${y}-${m}-${d}`;
 }
 
-function getHoursUntilNextJSTMidnight(): number {
-  const now = Date.now();
-  const jstNow = new Date(now + 9 * 60 * 60 * 1000);
-  const nextMidnight = Date.UTC(
-    jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + 1
-  ) - 9 * 60 * 60 * 1000;
-  return Math.max(1, Math.ceil((nextMidnight - now) / 3_600_000));
-}
-
-function calcDaysUntilDead(
-  stageProgress: number,
-  lastPostDate: string,
-  today: string,
-  freqTimes: number,
-  freqDays: number
-): number | null {
-  if (stageProgress <= 0) return null;
-  const interval = freqDays / freqTimes;
-  const dayDiff = Math.round(
-    (new Date(today).getTime() - new Date(lastPostDate).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  return Math.max(0, Math.ceil(stageProgress * interval - dayDiff + 1));
-}
-
-function CountdownBanner({
-  stageProgress, lastPostDate, freqTimes, freqDays, today,
-}: {
-  stageProgress: number; lastPostDate: string | null;
-  freqTimes: number; freqDays: number; today: string | null;
+function GreenBtn({ label, onClick, disabled = false }: {
+  label: string; onClick?: () => void; disabled?: boolean;
 }) {
-  const [hoursLeft] = useState(getHoursUntilNextJSTMidnight);
-
-  if (!today) return null;
-
-  if (!lastPostDate) {
-    return (
-      <div style={{ margin: "0 20px 12px", background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "14px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: DARK, lineHeight: 1.3 }}>まだ記録がありません</div>
-          <div style={{ fontSize: 11, color: "#A09080", marginTop: 3 }}>投稿を記録すると植物が育ちます</div>
-        </div>
-        <div style={{ fontSize: 32 }}>🌱</div>
-      </div>
-    );
-  }
-
-  const postedToday = lastPostDate === today;
-  const interval = freqDays / freqTimes;
-  const isDaily = interval <= 1;
-  const D = calcDaysUntilDead(stageProgress, lastPostDate, today, freqTimes, freqDays);
-
-  if (D === null) {
-    return (
-      <div style={{ margin: "0 20px 12px", background: postedToday ? "rgba(230,244,232,0.85)" : "rgba(255,255,255,0.7)", borderRadius: 18, padding: "14px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", border: postedToday ? `1.5px solid rgba(61,122,80,0.2)` : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: 10, color: postedToday ? "#5A8A6A" : "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: postedToday ? GREEN : DARK, lineHeight: 1.3 }}>
-            {postedToday ? "今日は投稿済み ✓" : "次の投稿で育ちます"}
-          </div>
-          <div style={{ fontSize: 11, color: postedToday ? "#5A8A6A" : "#A09080", marginTop: 3 }}>
-            {postedToday ? "新しい成長が始まりました" : "投稿を記録して成長を進めよう"}
-          </div>
-        </div>
-        <div style={{ fontSize: 32 }}>{postedToday ? "🌿" : "🌱"}</div>
-      </div>
-    );
-  }
-
-  const showHours = D === 1 && !postedToday && isDaily;
-  const num  = showHours ? hoursLeft : D;
-  const unit = showHours ? "時間" : "日";
-
-  type Cfg = { bg: string; numColor: string; labelColor: string; icon: string; sub: string; pulse: boolean; border: string };
-  let cfg: Cfg;
-
-  if (D === 0) {
-    cfg = { bg: "rgba(255,232,225,0.9)", numColor: RED_D,    labelColor: "#C06050", icon: "🥀", sub: "今すぐ投稿して復活させよう！",  pulse: true,  border: `1.5px solid rgba(138,64,48,0.3)`  };
-  } else if (showHours && hoursLeft <= 3) {
-    cfg = { bg: "rgba(255,232,225,0.9)", numColor: "#B04030", labelColor: "#C06050", icon: "🔥", sub: "今すぐ投稿してください！",       pulse: true,  border: `1.5px solid rgba(180,64,48,0.3)`  };
-  } else if (showHours) {
-    cfg = { bg: "rgba(255,240,220,0.9)", numColor: "#B06030", labelColor: "#A08050", icon: "⚠️", sub: "今日中に投稿してください！",     pulse: false, border: `1.5px solid rgba(196,100,40,0.25)` };
-  } else if (!postedToday && D <= 2) {
-    cfg = { bg: "rgba(255,240,220,0.9)", numColor: "#B06030", labelColor: "#A08050", icon: "⚠️", sub: "で枯れちゃう！早めに投稿を",     pulse: false, border: `1.5px solid rgba(196,100,40,0.25)` };
-  } else if (!postedToday && D <= 4) {
-    cfg = { bg: "rgba(255,248,228,0.9)", numColor: GOLD,      labelColor: "#9A8040", icon: "💧", sub: "で枯れちゃう",                  pulse: false, border: `1.5px solid rgba(196,146,42,0.2)`  };
-  } else if (!postedToday) {
-    cfg = { bg: "rgba(255,255,255,0.7)", numColor: DARK,      labelColor: "#A09080", icon: "🌱", sub: "で枯れちゃう",                  pulse: false, border: "none"                              };
-  } else {
-    const safe = D <= 3;
-    cfg = { bg: "rgba(230,244,232,0.85)", numColor: safe ? GOLD : GREEN, labelColor: safe ? "#9A8040" : "#5A8A6A", icon: "✅", sub: "今日は投稿済み ✓", pulse: false, border: `1.5px solid rgba(61,122,80,0.2)` };
-  }
-
-  return (
-    <div style={{
-      margin: "0 20px 12px",
-      background: cfg.bg,
-      borderRadius: 18,
-      padding: "14px 18px",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-      border: cfg.border,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      animation: cfg.pulse ? "pulseGlow 2s ease-in-out infinite" : "none",
-    }}>
-      <div>
-        <div style={{ fontSize: 10, color: cfg.labelColor, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>COUNTDOWN</div>
-        {D === 0 ? (
-          <div style={{ fontSize: 17, fontWeight: 700, color: cfg.numColor, lineHeight: 1.3 }}>枯れています...</div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: cfg.labelColor, marginRight: 5 }}>あと</span>
-            <span style={{ fontSize: 40, fontWeight: 700, color: cfg.numColor, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{num}</span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: cfg.numColor, marginLeft: 4 }}>{unit}</span>
-          </div>
-        )}
-        <div style={{ fontSize: 11, color: cfg.labelColor, marginTop: 3 }}>{cfg.sub}</div>
-      </div>
-      <div style={{ fontSize: 32, flexShrink: 0 }}>{cfg.icon}</div>
-    </div>
-  );
-}
-
-function isDamaged(stageProgress: number, stagePeak: number, stageMax: number): boolean {
-  return (stageProgress === 0 && stagePeak > 0) ||
-         (stagePeak >= stageMax / 3 && stageProgress < stageMax / 3);
-}
-
-function getAvatarSrc(formStage: number, damaged: boolean): string {
-  const stage = Math.min(formStage, 5);
-  const name = (damaged && stage > 0) ? IMG_DAMAGED[stage] : IMG_NORMAL[stage];
-  return `/avatars/${name}.png`;
-}
-
-function GreenBtn({ label, onClick, accent, disabled = false }: {
-  label: string; onClick?: () => void; accent?: string; disabled?: boolean;
-}) {
-  const bg = disabled ? "#C0B8AE" : (accent || GREEN);
-  const shadow = disabled ? "none" : `0 6px 22px ${accent ? "rgba(138,64,48,0.38)" : "rgba(61,122,80,0.4)"}`;
   return (
     <div onClick={disabled ? undefined : onClick} style={{
-      height: 56, borderRadius: 28, background: bg, color: "white",
+      height: 56, borderRadius: 28,
+      background: disabled ? "#C0B8AE" : GREEN,
+      color: "white",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 16, fontWeight: 700, cursor: disabled ? "default" : "pointer",
-      boxShadow: shadow, position: "relative", overflow: "hidden",
+      fontSize: 16, fontWeight: 700,
+      cursor: disabled ? "default" : "pointer",
+      boxShadow: disabled ? "none" : "0 6px 22px rgba(61,122,80,0.4)",
       transition: "all 0.25s",
       animation: disabled ? "none" : "pulseGlow 2.5s ease-in-out infinite",
       userSelect: "none",
+      position: "relative", overflow: "hidden",
     }}>
       <svg style={{ position: "absolute", left: 16, top: "50%", animation: "btnLeafL 3s ease-in-out infinite", opacity: disabled ? 0.15 : 0.5 }} width="24" height="28" viewBox="0 0 28 32">
         <path d="M14 28 Q4 20 4 12 Q4 4 14 2 Q10 10 14 18 Q16 12 20 6 Q22 14 18 22 Z" fill="white" />
@@ -229,16 +83,14 @@ function GreenBtn({ label, onClick, accent, disabled = false }: {
   );
 }
 
-function EvolutionOverlay({ evolution, onDone }: {
-  evolution: EvolutionState;
-  onDone: () => void;
-}) {
-  const previousStage = Math.min(evolution.previousStage, 5);
-  const nextStage = Math.min(evolution.nextStage, 5);
+function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () => void }) {
+  const [phase, setPhase] = useState<"complete" | "gacha" | "reveal">("complete");
 
   useEffect(() => {
-    const timer = setTimeout(onDone, 4400);
-    return () => clearTimeout(timer);
+    const t1 = setTimeout(() => setPhase("gacha"), 2000);
+    const t2 = setTimeout(() => setPhase("reveal"), 3600);
+    const t3 = setTimeout(onDone, 6000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onDone]);
 
   return (
@@ -253,44 +105,59 @@ function EvolutionOverlay({ evolution, onDone }: {
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         padding: "28px", textAlign: "center",
-        position: "relative", overflow: "hidden",
+        position: "relative",
       }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 38%, rgba(196,146,42,0.18), transparent 42%)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-          <div style={{ width: 116, height: 116, borderRadius: 20, overflow: "hidden", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.45, transform: "scale(0.92)" }}>
-            <img src={`/avatars/${IMG_NORMAL[previousStage]}.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          </div>
-          <div style={{ fontSize: 24, color: GOLD, fontWeight: 700, animation: "fadeInUp 0.45s 0.15s ease both" }}>→</div>
-          <div style={{
-            width: 156, height: 156, borderRadius: 24, overflow: "hidden",
-            border: `2px solid ${GOLD}`, background: BG,
-            boxShadow: "0 0 34px rgba(196,146,42,0.38)",
-            animation: "evo-avatar-in 0.75s 0.25s ease both",
-          }}>
-            <img src={`/avatars/${IMG_NORMAL[nextStage]}.png`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          </div>
-        </div>
-        <div style={{ position: "relative", fontSize: 30, fontWeight: 800, color: DARK, marginBottom: 8, animation: "fadeInUp 0.45s 0.55s ease both" }}>
-          進化しました！
-        </div>
-        <div style={{ position: "relative", fontSize: 14, fontWeight: 700, color: GOLD, marginBottom: 12, animation: "fadeInUp 0.45s 0.65s ease both" }}>
-          {STAGE_NAMES[previousStage]} から {STAGE_NAMES[nextStage]} へ
-        </div>
-        <div style={{ position: "relative", fontSize: 14, color: "#6A7068", lineHeight: 1.7, minHeight: 48, animation: "fadeInUp 0.45s 0.75s ease both" }}>
-          {evolution.message}
-        </div>
-        <button
-          onClick={onDone}
-          style={{
-            position: "relative", marginTop: 24, width: "100%", maxWidth: 280,
-            height: 52, border: "none", borderRadius: 26, background: GREEN,
-            color: "white", fontSize: 15, fontWeight: 700,
-            boxShadow: "0 6px 22px rgba(61,122,80,0.35)", cursor: "pointer",
-            fontFamily: "var(--font-noto), sans-serif", animation: "fadeInUp 0.45s 0.95s ease both",
-          }}
-        >
-          育った姿を見る
-        </button>
+
+        {phase === "complete" && (
+          <>
+            <div style={{ fontSize: 48, marginBottom: 16, animation: "scaleIn 0.4s ease" }}>🎉</div>
+            <div style={{ width: 200, height: 200, borderRadius: 24, overflow: "hidden", border: `2px solid ${GOLD}`, background: BG, boxShadow: "0 0 40px rgba(196,146,42,0.4)", animation: "scaleIn 0.4s ease", marginBottom: 20 }}>
+              <img src={getPlantImageSrc(gacha.completedPlantType, 5)} alt="completed" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: DARK, animation: "fadeInUp 0.45s ease" }}>
+              {PLANT_NAMES[gacha.completedPlantType]}が完成！
+            </div>
+            <div style={{ fontSize: 14, color: "#6A7068", marginTop: 8, animation: "fadeInUp 0.45s 0.1s ease both" }}>
+              全5ステージをクリアしました
+            </div>
+          </>
+        )}
+
+        {phase === "gacha" && (
+          <>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#6A7068", marginBottom: 20 }}>次の植物は…</div>
+            <div style={{ width: 120, height: 120, borderRadius: 20, background: "rgba(61,122,80,0.1)", border: `2px dashed ${GREEN}`, display: "flex", alignItems: "center", justifyContent: "center", animation: "shimmerDot 0.8s ease-in-out infinite", marginBottom: 20 }}>
+              <div style={{ fontSize: 40, animation: "spin 0.6s linear infinite" }}>🌿</div>
+            </div>
+            <div style={{ fontSize: 16, color: "#9A9080" }}>ガチャ中...</div>
+          </>
+        )}
+
+        {phase === "reveal" && (
+          <>
+            <div style={{ fontSize: 18, fontWeight: 700, color: GOLD, marginBottom: 16, animation: "fadeInUp 0.4s ease" }}>
+              新しい植物が来た！
+            </div>
+            <div style={{ width: 200, height: 200, borderRadius: 24, overflow: "hidden", border: `2px solid ${GREEN}`, background: BG, boxShadow: "0 0 40px rgba(61,122,80,0.3)", animation: "scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1)", marginBottom: 20 }}>
+              <img src={getPlantImageSrc(gacha.newPlantType, 1)} alt="new plant" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: DARK, animation: "fadeInUp 0.4s ease" }}>
+              {PLANT_NAMES[gacha.newPlantType]}
+            </div>
+            <div style={{ fontSize: 14, color: "#6A7068", marginTop: 8, marginBottom: 24, animation: "fadeInUp 0.4s 0.1s ease both" }}>
+              ステージ1からスタート！
+            </div>
+            <button onClick={onDone} style={{
+              width: "100%", maxWidth: 280, height: 52, border: "none", borderRadius: 26,
+              background: GREEN, color: "white", fontSize: 15, fontWeight: 700,
+              boxShadow: "0 6px 22px rgba(61,122,80,0.35)", cursor: "pointer",
+              fontFamily: "var(--font-noto), sans-serif", animation: "fadeInUp 0.4s 0.2s ease both",
+            }}>
+              育てはじめる
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -298,7 +165,8 @@ function EvolutionOverlay({ evolution, onDone }: {
 
 function PostModal({ deviceId, onClose, onSuccess }: {
   deviceId: string;
-  onClose: () => void; onSuccess: (result: SubmitResult) => void;
+  onClose: () => void;
+  onSuccess: (result: SubmitResult) => void;
 }) {
   const [url, setUrl]     = useState("");
   const [loading, setLoading] = useState(false);
@@ -321,16 +189,21 @@ function PostModal({ deviceId, onClose, onSuccess }: {
     return () => { clearTimeout(t); setOgpLoading(false); };
   }, [url]);
 
+  const isDebug = typeof window !== "undefined" && window.location.hostname === "localhost";
+
   const submit = async () => {
-    if (!url.trim()) return;
-    if (!url.includes("note.com")) { setError("note.com のURLを入力してください"); return; }
+    if (!url.trim()) { setError("URLを入力してください"); return; }
+    if (!isDebug && !url.includes("note.com")) {
+      setError("note.com のURLを入力してください");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`${API_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, url }),
+        body: JSON.stringify({ deviceId, url, ...(isDebug ? { debugMode: true } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "エラーが発生しました"); setLoading(false); return; }
@@ -339,16 +212,22 @@ function PostModal({ deviceId, onClose, onSuccess }: {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,10,0.65)", display: "flex", alignItems: "flex-end", zIndex: 100, animation: "fadeIn 0.22s ease" }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(10,14,10,0.65)", display: "flex", alignItems: "flex-end", zIndex: 100, animation: "fadeIn 0.22s ease" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div style={{ width: "100%", maxWidth: 390, margin: "0 auto", background: BG, borderRadius: "28px 28px 0 0", padding: "24px 24px 52px", animation: "slideUp 0.35s cubic-bezier(0.32,0.72,0,1)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>投稿を記録する</div>
           <div onClick={onClose} style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}>✕</div>
         </div>
         <div style={{ fontSize: 13, color: "#8A9080", marginBottom: 9 }}>Note記事のURLを貼り付けてください</div>
-        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://note.com/..."
-          style={{ width: "100%", height: 50, borderRadius: 14, border: `1.5px solid ${url ? GREEN : "#C8C0B0"}`, background: "rgba(255,255,255,0.7)", padding: "0 14px", fontSize: 14, color: DARK, outline: "none", transition: "border 0.2s", boxSizing: "border-box", fontFamily: "var(--font-noto), sans-serif" }} />
+        <input
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://note.com/..."
+          style={{ width: "100%", height: 50, borderRadius: 14, border: `1.5px solid ${url ? GREEN : "#C8C0B0"}`, background: "rgba(255,255,255,0.7)", padding: "0 14px", fontSize: 14, color: DARK, outline: "none", transition: "border 0.2s", boxSizing: "border-box", fontFamily: "var(--font-noto), sans-serif" }}
+        />
         {ogpLoading && <div style={{ fontSize: 12, color: "#A09080", marginTop: 8 }}>記事を取得中...</div>}
         {!ogpLoading && ogp && (
           <div style={{ display: "flex", gap: 10, alignItems: "center", background: "rgba(255,255,255,0.7)", borderRadius: 12, padding: "8px 12px", marginTop: 8 }}>
@@ -366,23 +245,20 @@ function PostModal({ deviceId, onClose, onSuccess }: {
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const [deviceId, setDeviceId] = useState("");
-  const [state, setState]     = useState<AvatarState | null>(null);
-  const [posts, setPosts]     = useState<PostCard[]>([]);
+  const [state, setState]   = useState<PlantState | null>(null);
+  const [posts, setPosts]   = useState<PostCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
-  const [imgKey, setImgKey]   = useState(0);
+  const [imgKey, setImgKey] = useState(0);
   const [showPost, setShowPost] = useState(false);
-  const [progressAnimating, setProgressAnimating] = useState(false);
-  const [evolution, setEvolution] = useState<EvolutionState | null>(null);
-  const pendingStateRef = useRef<AvatarState | null>(null);
+  const [gacha, setGacha]   = useState<GachaState | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [today] = useState(getTodayJST);
 
   async function handleReset() {
-    if (!confirm("本当にリセットしますか？\nアバターの進捗がすべて消えます。")) return;
+    if (!confirm("本当にリセットしますか？\nすべての進捗が消えます。")) return;
     setResetting(true);
     try {
       await fetch(`${API_URL}/reset`, {
@@ -390,7 +266,7 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deviceId }),
       });
-      router.push("/setup");
+      window.location.reload();
     } finally { setResetting(false); }
   }
 
@@ -402,8 +278,7 @@ export default function HomePage() {
       ]);
       if (stateRes.ok) {
         const data = await stateRes.json();
-        setState(data);
-        if (!data.courseType) router.push("/setup");
+        setState(data as PlantState);
       }
       if (histRes.ok) {
         const { posts: raw } = await histRes.json();
@@ -418,7 +293,7 @@ export default function HomePage() {
         setPosts(withOgp);
       }
     } catch {
-      setState({ streak: 0, avatarLevel: 0, avatarDamage: 0, formStage: 0, stageProgress: 0, stagePeak: 0, stageMax: 6, courseType: null, courseStartDate: null, freqTimes: 1, freqDays: 1, lastPostDate: null });
+      setState({ streak: 0, currentPlantType: 0, currentPlantStage: 1, completedPlants: [], lastPostDate: null, freqTimes: 1, freqDays: 1 });
     } finally { setLoading(false); }
   };
 
@@ -436,68 +311,20 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const refreshAfterPost = () => {
-    if (deviceId) fetchAll(deviceId);
-  };
-
   const handlePostSuccess = (result: SubmitResult) => {
     setShowPost(false);
-    if (!state || !result.state || result.alreadySubmitted) {
-      refreshAfterPost();
-      return;
-    }
-
-    const nextState: AvatarState = {
-      ...state,
-      ...result.state,
-      lastPostDate: today,
-    };
-    const evolved = nextState.formStage > state.formStage || !!result.isMilestone;
-
-    setProgressAnimating(true);
-
-    if (evolved) {
-      pendingStateRef.current = nextState;
-      setState({
-        ...state,
-        stageProgress: state.stageMax,
-        stagePeak: Math.max(state.stagePeak, state.stageMax),
-        streak: nextState.streak,
-        avatarLevel: nextState.avatarLevel,
-        avatarDamage: nextState.avatarDamage,
-        lastPostDate: today,
-      });
-
-      setTimeout(() => {
-        setProgressAnimating(false);
-        setEvolution({
-          previousStage: state.formStage,
-          nextStage: nextState.formStage,
-          message: result.message || "継続の成果で植物が進化しました！",
-        });
-      }, 950);
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      setState(nextState);
+    if (result.state) {
+      setState(result.state);
       setImgKey(k => k + 1);
-    });
-    setTimeout(() => {
-      setProgressAnimating(false);
-      refreshAfterPost();
-    }, 1100);
+    }
+    if (result.completedPlantType !== null && result.newPlantType !== null) {
+      setGacha({ completedPlantType: result.completedPlantType!, newPlantType: result.newPlantType! });
+    }
   };
 
-  const finishEvolution = () => {
-    const nextState = pendingStateRef.current;
-    pendingStateRef.current = null;
-    setEvolution(null);
-    if (nextState) {
-      setState(nextState);
-      setImgKey(k => k + 1);
-    }
-    refreshAfterPost();
+  const finishGacha = () => {
+    setGacha(null);
+    if (deviceId) fetchAll(deviceId);
   };
 
   if (loading) {
@@ -510,38 +337,67 @@ export default function HomePage() {
     );
   }
 
-  if (!state || !state.courseType) return null;
-
-  const daysLeft = (today && state.lastPostDate)
-    ? calcDaysUntilDead(state.stageProgress, state.lastPostDate, today, state.freqTimes, state.freqDays)
-    : null;
-  const damaged = isDamaged(state.stageProgress, state.stagePeak, state.stageMax) || daysLeft === 0;
-  const stage   = Math.min(state.formStage, 5);
-  const imgSrc  = getAvatarSrc(state.formStage, damaged);
+  const isDebug = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const currentPlantType = state?.currentPlantType ?? 0;
+  const currentPlantStage = state?.currentPlantStage ?? 1;
+  const imgSrc = getPlantImageSrc(currentPlantType, currentPlantStage);
+  const postedToday = !isDebug && state?.lastPostDate === today;
+  const totalCompleted = state?.completedPlants?.length ?? 0;
 
   return (
     <div style={{ background: BG, minHeight: "100dvh", position: "relative", overflow: "hidden", maxWidth: 390, margin: "0 auto", display: "flex", flexDirection: "column" }}>
 
+      {/* Plant image area */}
       <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", flexShrink: 0 }}>
-        <img key={imgKey} src={imgSrc} alt={STAGE_NAMES[stage]}
-          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", display: "block", animation: "scaleIn 0.4s ease" }} />
+        <img
+          key={imgKey}
+          src={imgSrc}
+          alt={PLANT_NAMES[currentPlantType]}
+          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", display: "block", animation: "scaleIn 0.4s ease" }}
+        />
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom,rgba(234,227,214,0.95) 0%,rgba(234,227,214,0) 100%)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80, background: "linear-gradient(to top,rgba(234,227,214,1) 0%,rgba(234,227,214,0) 100%)", pointerEvents: "none" }} />
 
+        {/* Header */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10 }}>
           <div style={{ padding: "14px 20px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontFamily: "var(--font-dancing), cursive", fontSize: 26, fontWeight: 700, color: DARK }}>note tree</span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: damaged ? "#C04030" : "#4A8A5A", background: damaged ? "rgba(255,240,236,0.92)" : "rgba(230,244,232,0.92)", padding: "4px 10px", borderRadius: 12, border: `1px solid ${damaged ? "#E8B0A0" : "#B4D4B8"}`, backdropFilter: "blur(4px)" }}>
-                {damaged ? "🥀 ダメージ" : "🌿 正常"}
+              {postedToday && (
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#4A8A5A", background: "rgba(230,244,232,0.92)", padding: "4px 10px", borderRadius: 12, border: "1px solid #B4D4B8", backdropFilter: "blur(4px)" }}>
+                  🌿 今日投稿済み
+                </div>
+              )}
+              {/* Gallery icon */}
+              <div style={{ position: "relative" }} className="tooltip-wrap">
+                <Link href="/gallery" style={{
+                  width: 32, height: 32, borderRadius: 16,
+                  background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 15, border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none",
+                }}>🌸</Link>
+                <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(26,26,24,0.85)", color: "white", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, whiteSpace: "nowrap", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s" }} className="tooltip">ギャラリー</div>
               </div>
-              <ShareButton imgSrc={imgSrc} stageName={STAGE_NAMES[stage]} stageDesc={STAGE_DESC[stage]} streak={state.streak} />
+              {/* History icon */}
+              <div style={{ position: "relative" }} className="tooltip-wrap">
+                <Link href="/history" style={{
+                  width: 32, height: 32, borderRadius: 16,
+                  background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 15, border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none",
+                }}>📋</Link>
+                <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(26,26,24,0.85)", color: "white", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, whiteSpace: "nowrap", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s" }} className="tooltip">投稿履歴</div>
+              </div>
               <div ref={settingsRef} style={{ position: "relative" }}>
-                <div onClick={() => setShowSettings(v => !v)}
-                  style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", border: "1px solid rgba(0,0,0,0.08)" }}>⚙</div>
+                <div
+                  onClick={() => setShowSettings(v => !v)}
+                  style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer", border: "1px solid rgba(0,0,0,0.08)" }}
+                >⚙</div>
                 {showSettings && (
-                  <div style={{ position: "absolute", right: 0, top: 38, background: "white", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: "8px 0", minWidth: 160, zIndex: 50, animation: "fadeIn 0.15s ease" }}>
+                  <div style={{ position: "absolute", right: 0, top: 38, background: "white", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: "8px 0", minWidth: 170, zIndex: 50, animation: "fadeIn 0.15s ease" }}>
+                    <Link href="/gallery" style={{ display: "block", padding: "10px 16px", fontSize: 13, color: DARK, textDecoration: "none" }}>🌸 育てた植物ギャラリー</Link>
                     <Link href="/history" style={{ display: "block", padding: "10px 16px", fontSize: 13, color: DARK, textDecoration: "none" }}>🌿 投稿履歴（全件）</Link>
+                    <Link href="/setup" style={{ display: "block", padding: "10px 16px", fontSize: 13, color: DARK, textDecoration: "none" }}>⚙ 通知設定</Link>
                     {deviceId && <div style={{ padding: "10px 16px" }}><NotificationToggle deviceId={deviceId} /></div>}
                     <div style={{ height: 1, background: "#EEE", margin: "4px 0" }} />
                     <button onClick={handleReset} disabled={resetting} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", fontSize: 12, color: "#D08070", background: "none", border: "none", cursor: "pointer" }}>
@@ -555,54 +411,59 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Content */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 110, position: "relative", zIndex: 2 }}>
 
-        <div style={{ textAlign: "center", padding: "6px 0 12px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: damaged ? RED_D : GOLD, letterSpacing: 0.5, marginBottom: 8 }}>
-            {STAGE_NAMES[stage]} · {STAGE_DESC[stage]}
-          </div>
-          <div style={{ display: "flex", gap: 7, justifyContent: "center" }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ width: i === stage ? 22 : 8, height: 8, borderRadius: 4, background: i <= stage ? (damaged ? RED_D : GOLD) : "#C8C0B0", transition: "all 0.3s" }} />
+        {/* Stage dots */}
+        <div style={{ textAlign: "center", padding: "6px 0 14px" }}>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", marginBottom: 4 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: i + 1 === currentPlantStage ? 24 : 10,
+                  height: 10,
+                  borderRadius: 5,
+                  background: i + 1 <= currentPlantStage ? GREEN : "#C8C0B0",
+                  transition: "all 0.3s",
+                }}
+              />
             ))}
           </div>
+          <div style={{ fontSize: 12, color: "#9A9080" }}>ステージ {currentPlantStage} / 5</div>
         </div>
 
-        <div style={{ display: "flex", gap: 10, margin: "0 20px 16px" }}>
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: 10, margin: "0 20px 14px" }}>
           <div style={{ flex: 1, background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
             <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>STREAK</div>
-            <div style={{ fontSize: 34, fontWeight: 700, color: DARK, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{state.streak}</div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: DARK, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{state?.streak ?? 0}</div>
             <div style={{ fontSize: 11, color: "#9A9080", marginTop: 2 }}>日連続</div>
           </div>
-          <div style={{ flex: 1.6, background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-              <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1 }}>NEXT LEVEL</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: damaged ? RED_D : GREEN }}>{state.stageProgress}/{state.stageMax}</div>
-            </div>
-            <div style={{ height: 7, background: "#DDD8CC", borderRadius: 4, overflow: "hidden", marginTop: 6 }}>
-              <div style={{
-                height: 7,
-                width: `${state.stageMax > 0 ? Math.min(100, (state.stageProgress / state.stageMax) * 100) : 0}%`,
-                background: damaged ? "linear-gradient(90deg,#8A4030,#C06050)" : `linear-gradient(90deg,${GREEN},#70B070)`,
-                borderRadius: 4,
-                transition: "width 0.9s cubic-bezier(0.22,1,0.36,1)",
-                boxShadow: progressAnimating ? `0 0 14px ${damaged ? "rgba(192,96,80,0.55)" : "rgba(61,122,80,0.55)"}` : "none",
-              }} />
-            </div>
-            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 5 }}>
-              {stage < 5 ? `あと${state.stageMax - state.stageProgress}回で「${STAGE_NAMES[stage + 1]}」へ` : "🏆 最終形態に到達！"}
-            </div>
+          <div style={{ flex: 1, background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
+            <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>COMPLETED</div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: DARK, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{totalCompleted}</div>
+            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 2 }}>植物完成</div>
           </div>
         </div>
 
-        <CountdownBanner
-          stageProgress={state.stageProgress}
-          lastPostDate={state.lastPostDate}
-          freqTimes={state.freqTimes}
-          freqDays={state.freqDays}
-          today={today}
-        />
+        {/* Status banner */}
+        <div style={{ margin: "0 20px 14px", background: postedToday ? "rgba(230,244,232,0.85)" : "rgba(255,255,255,0.7)", borderRadius: 18, padding: "14px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", border: postedToday ? "1.5px solid rgba(61,122,80,0.2)" : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 10, color: postedToday ? "#5A8A6A" : "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>STATUS</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: postedToday ? GREEN : DARK, lineHeight: 1.3 }}>
+              {postedToday ? "今日は投稿済み ✓" : "今日はまだ投稿していない"}
+            </div>
+            <div style={{ fontSize: 11, color: postedToday ? "#5A8A6A" : "#A09080", marginTop: 3 }}>
+              {postedToday
+                ? `ステージ${currentPlantStage}/5まで育った`
+                : "投稿するたびに植物が育ちます"}
+            </div>
+          </div>
+          <div style={{ fontSize: 32, flexShrink: 0 }}>{postedToday ? "🌿" : "🌱"}</div>
+        </div>
 
+        {/* Recent posts */}
         {posts.length > 0 && (
           <div style={{ margin: "0 20px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#A09080", letterSpacing: 1, marginBottom: 8 }}>最近の投稿</div>
@@ -619,41 +480,28 @@ export default function HomePage() {
                 </div>
               </a>
             ))}
-            <Link href="/history" style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              height: 40, borderRadius: 20, marginTop: 4,
-              border: "1px solid #C8C0B0", background: "rgba(255,255,255,0.5)",
-              fontSize: 13, fontWeight: 600, color: "#7A8070", textDecoration: "none",
-            }}>
+            <Link href="/history" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 40, borderRadius: 20, marginTop: 4, border: "1px solid #C8C0B0", background: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, color: "#7A8070", textDecoration: "none" }}>
               もっと見る →
             </Link>
           </div>
         )}
-
-        {deviceId && <PromoModal deviceId={deviceId} />}
       </div>
 
+      {/* CTA Button */}
       <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 40px)", maxWidth: 350, zIndex: 10 }}>
         <GreenBtn
-          label={damaged ? "🌧 投稿して回復する" : "＋ 投稿を記録する"}
-          accent={damaged ? RED_D : GREEN}
-          onClick={() => setShowPost(true)}
+          label={postedToday ? "今日は投稿済み ✓" : "＋ 投稿を記録する"}
+          onClick={postedToday ? undefined : () => setShowPost(true)}
+          disabled={postedToday}
         />
       </div>
 
       {showPost && deviceId && (
-        <PostModal
-          deviceId={deviceId}
-          onClose={() => setShowPost(false)}
-          onSuccess={handlePostSuccess}
-        />
+        <PostModal deviceId={deviceId} onClose={() => setShowPost(false)} onSuccess={handlePostSuccess} />
       )}
 
-      {evolution && (
-        <EvolutionOverlay
-          evolution={evolution}
-          onDone={finishEvolution}
-        />
+      {gacha && (
+        <GachaOverlay gacha={gacha} onDone={finishGacha} />
       )}
     </div>
   );
