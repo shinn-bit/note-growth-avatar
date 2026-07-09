@@ -4,12 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "../lib/deviceId";
 import { BotanicalCorners } from "../components/BotanicalCorners";
+import { BG, GREEN, DARK } from "../lib/theme";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const DARK  = "#1A1A18";
 
 type OgpData = { title: string; image: string };
 
@@ -176,7 +173,7 @@ export default function SubmitPage() {
 
         <div style={{ display: "flex", justifyContent: "center", marginTop: 36 }}>
           <div style={{ width: 120, height: 120, borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, opacity: 0.7 }}>
-            <img src="/avatars/stage2_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src="/avatars/ふじの木-3.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         </div>
         <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: "#9A9080" }}>投稿するたびに木が育ちます</div>

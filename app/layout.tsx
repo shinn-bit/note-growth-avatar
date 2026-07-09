@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Dancing_Script, DM_Serif_Display, Noto_Sans_JP } from "next/font/google";
+import { Geist_Mono, Dancing_Script, DM_Serif_Display, Noto_Sans_JP, Shippori_Mincho, Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import AuthSessionProvider from "./lib/session-provider";
 import { SwRegister } from "./lib/sw-register";
@@ -26,6 +26,18 @@ const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto",
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
+});
+
+const shipporiMincho = Shippori_Mincho({
+  variable: "--font-shippori",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
+const zenMaruGothic = Zen_Maru_Gothic({
+  variable: "--font-zenmaru",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 const APP_URL = "https://note-growth-avatar.vercel.app";
@@ -81,7 +93,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${geistMono.variable} ${dancingScript.variable} ${dmSerifDisplay.variable} ${notoSansJP.variable} h-full antialiased`}
+      className={`${geistMono.variable} ${dancingScript.variable} ${dmSerifDisplay.variable} ${notoSansJP.variable} ${shipporiMincho.variable} ${zenMaruGothic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
           <script

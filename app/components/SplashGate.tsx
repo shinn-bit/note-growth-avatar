@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { BotanicalCorners } from "./BotanicalCorners";
-
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const GOLD  = "#C4922A";
-const DARK  = "#1A1A18";
+import { BG, GREEN, GOLD, DARK } from "../lib/theme";
+import { LoadingDots } from "./ui/LoadingDots";
 
 const OB_STEPS = [
   {
-    img: "/avatars/stage0_normal.png",
+    img: "/avatars/ふじの木-1.png",
     title: "投稿するたびに\n木が育つ",
     body: "noteに記事を投稿するたびに、あなたの木が成長します。継続が目に見えて分かります。",
     accent: GOLD,
@@ -22,7 +19,7 @@ const OB_STEPS = [
     accent: "#A05040",
   },
   {
-    img: "/avatars/stage5_normal.png",
+    img: "/avatars/ふじの木-6.png",
     title: "継続して\n大樹を目指そう",
     body: "6段階の成長ステージを経て、最終的に藤の大樹へ。継続こそが最高の資産です。",
     accent: GREEN,
@@ -176,7 +173,7 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
 
           <div style={{ position: "relative", zIndex: 2, marginBottom: 8, animation: phase >= 1 ? "splashGrow 1s cubic-bezier(0.34,1.56,0.64,1) both" : "none", opacity: phase >= 1 ? 1 : 0 }}>
             <div style={{ width: 230, height: 230, borderRadius: 24, overflow: "hidden", border: "1.5px solid rgba(200,185,155,0.55)", background: BG, boxShadow: "0 4px 24px rgba(0,0,0,0.10)" }}>
-              <img src="/avatars/stage2_normal.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <img src="/avatars/ふじの木-3.png" alt="avatar" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
           </div>
 
@@ -197,10 +194,8 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
             <div style={{ height: 1, width: 40, background: `linear-gradient(90deg,${GOLD},transparent)` }} />
           </div>
 
-          <div style={{ position: "absolute", bottom: 64, display: "flex", gap: 10, opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s" }}>
-            {[0, 1, 2].map(i => (
-              <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: GREEN, animation: `shimmerDot 1.2s ${i * 0.22}s ease-in-out infinite` }} />
-            ))}
+          <div style={{ position: "absolute", bottom: 64, opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s" }}>
+            <LoadingDots size={7} />
           </div>
         </div>
         </div>

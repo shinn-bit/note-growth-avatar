@@ -5,6 +5,7 @@
   --foreground: #1A1A18;
   --green: #3D7A50;
   --gold: #C4922A;
+  --red: #C04030;
   --red-d: #8A4030;
   --blue: #7A9ABE;
 }
@@ -17,6 +18,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-green: var(--green);
+  --color-brand-gold: var(--gold);
+  --color-brand-red: var(--red);
+  --color-brand-red-d: var(--red-d);
+  --color-brand-blue: var(--blue);
   --font-sans: 'Noto Sans JP', sans-serif;
   --font-mono: var(--font-geist-mono);
 }
@@ -68,3 +74,16 @@ body {
 @keyframes spin           { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 
 .tooltip-wrap:hover .tooltip { opacity: 1 !important; }
+
+/* ── Redesign v2 (Claude Design sync: app-redesign-v2) — home + gacha ── */
+@keyframes nt-float      { 0%,100% { transform: translateY(0); opacity: .3; } 50% { transform: translateY(-16px); opacity: .8; } }
+@keyframes nt-pulse      { 0%,100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
+@keyframes nt-rise       { from { transform: translateY(26px) scale(.94); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes nt-shake      { 0%,100% { transform: rotate(0deg); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(7deg); } 60% { transform: rotate(-5deg); } 80% { transform: rotate(5deg); } }
+@keyframes nt-glowmound  { 0%,100% { box-shadow: 0 0 22px 4px rgba(217,172,75,.3); } 50% { box-shadow: 0 0 64px 22px rgba(217,172,75,.7); } }
+@keyframes nt-ripple     { from { transform: scale(.35); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+@keyframes nt-mote       { 0% { transform: translateY(0) scale(1); opacity: 0; } 18% { opacity: .95; } 100% { transform: translateY(-150px) scale(.6); opacity: 0; } }
+@keyframes nt-flash      { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes nt-rays       { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes nt-petal      { 0% { transform: translate(0, -10px) rotate(0deg); opacity: 0; } 10% { opacity: .9; } 100% { transform: translate(-36px, 330px) rotate(240deg); opacity: 0; } }
+@keyframes nt-pop        { 0% { transform: scale(0); } 70% { transform: scale(1.4); } 100% { transform: scale(1); } }

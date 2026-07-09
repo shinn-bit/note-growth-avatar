@@ -3,23 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "../lib/deviceId";
+import { BG, GREEN, GOLD, DARK } from "../lib/theme";
+import { PLANT_NAMES, getMaxStage, getPlantImageSrc } from "../lib/plant";
+import { FullScreenLoader } from "../components/ui/LoadingDots";
+import { Card } from "../components/ui/Card";
+import { CloseButton } from "../components/ui/CloseButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const GOLD  = "#C4922A";
-const DARK  = "#1A1A18";
-
-const PLANT_NAMES = ["ふじの木", "植物A", "植物B", "植物C", "植物D", "植物E", "植物F"];
-
-function getPlantImageSrc(plantType: number, stage: number): string {
-  if (plantType === 0) {
-    const stageNames = ["stage1_normal", "stage2_normal", "stage3_normal", "stage4_normal", "stage5_normal"];
-    return `/avatars/${stageNames[Math.min(stage - 1, 4)]}.png`;
-  }
-  return `/avatars/${plantType}-${Math.min(stage, 5)}.png`;
-}
 
 type PlantState = {
   currentPlantType: number;
@@ -53,13 +43,7 @@ export default function GalleryPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", background: BG }}>
-        <div style={{ display: "flex", gap: 10 }}>
-          {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: GREEN, animation: `shimmerDot 1.2s ${i * 0.22}s ease-in-out infinite` }} />)}
-        </div>
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   // Build gallery entries: current plant + all unique completed plants
@@ -84,7 +68,7 @@ export default function GalleryPage() {
     if (!seen.has(t)) {
       entries.push({
         plantType: t,
-        maxUnlockedStage: 5,
+        maxUnlockedStage: getMaxStage(t),
         isCurrentlyGrowing: false,
         completedCount: completedPlants.filter(x => x === t).length,
       });
@@ -117,33 +101,23 @@ export default function GalleryPage() {
               : <div style={{ fontSize: 15, color: GOLD, fontWeight: 700 }}>✅ 完成済み × {selectedPlant.completedCount}</div>
             }
           </div>
-          <div
-            onClick={() => setSelectedPlant(null)}
-            style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}
-          >✕</div>
+          <CloseButton onClick={() => setSelectedPlant(null)} />
         </div>
 
         {/* Stages — vertical list of square cards */}
         <div style={{ padding: "0 24px 60px", display: "flex", flexDirection: "column", gap: 14 }}>
-          {Array.from({ length: 5 }).map((_, i) => {
+          {Array.from({ length: getMaxStage(selectedPlant.plantType) }).map((_, i) => {
             const stage = i + 1;
             const unlocked = stage <= selectedPlant.maxUnlockedStage;
             const isCurrent = selectedPlant.isCurrentlyGrowing && stage === selectedPlant.maxUnlockedStage;
             const src = getPlantImageSrc(selectedPlant.plantType, stage);
             return (
-              <div
+              <Card
                 key={stage}
                 onClick={unlocked ? () => setLightboxSrc(src) : undefined}
-                style={{
-                  background: "rgba(255,255,255,0.7)",
-                  borderRadius: 20,
-                  padding: 12,
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-                  border: isCurrent ? `2px solid ${GREEN}` : "none",
-                  opacity: unlocked ? 1 : 0.38,
-                  cursor: unlocked ? "pointer" : "default",
-                  position: "relative",
-                }}
+                borderRadius={20}
+                border={isCurrent ? `2px solid ${GREEN}` : "none"}
+                style={{ opacity: unlocked ? 1 : 0.38, position: "relative" }}
               >
                 <div style={{ width: "100%", aspectRatio: "1", borderRadius: 14, overflow: "hidden", background: BG }}>
                   {unlocked ? (
@@ -155,7 +129,7 @@ export default function GalleryPage() {
                 {isCurrent && (
                   <div style={{ position: "absolute", top: 18, right: 18, background: GREEN, borderRadius: 10, padding: "3px 10px", fontSize: 10, fontWeight: 700, color: "white" }}>現在</div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -170,10 +144,7 @@ export default function GalleryPage() {
           <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>育てた植物</div>
           <div style={{ fontSize: 12, color: "#9A9080", marginTop: 2 }}>植物を選ぶとステージを確認できます</div>
         </div>
-        <div
-          onClick={() => router.push("/")}
-          style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}
-        >✕</div>
+        <CloseButton onClick={() => router.push("/")} />
       </div>
 
       {entries.length === 0 && (
@@ -186,18 +157,12 @@ export default function GalleryPage() {
 
       <div style={{ padding: "0 24px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         {entries.map((entry) => (
-          <div
+          <Card
             key={entry.plantType}
             onClick={() => setSelectedPlant(entry)}
-            style={{
-              background: "rgba(255,255,255,0.7)",
-              borderRadius: 18,
-              padding: 12,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-              border: entry.isCurrentlyGrowing ? `2px solid ${GREEN}` : "1.5px solid rgba(200,192,176,0.5)",
-              cursor: "pointer",
-              transition: "transform 0.15s",
-            }}
+            padding={12}
+            border={entry.isCurrentlyGrowing ? `2px solid ${GREEN}` : "1.5px solid rgba(200,192,176,0.5)"}
+            style={{ transition: "transform 0.15s" }}
           >
             <div style={{ width: "100%", aspectRatio: "1", borderRadius: 12, overflow: "hidden", background: BG }}>
               <img
@@ -208,12 +173,12 @@ export default function GalleryPage() {
             </div>
             <div style={{ marginTop: 8 }}>
               {entry.isCurrentlyGrowing ? (
-                <div style={{ fontSize: 11, color: GREEN, fontWeight: 600 }}>🌱 育成中 · S{entry.maxUnlockedStage}/5</div>
+                <div style={{ fontSize: 11, color: GREEN, fontWeight: 600 }}>🌱 育成中 · S{entry.maxUnlockedStage}/{getMaxStage(entry.plantType)}</div>
               ) : (
                 <div style={{ fontSize: 11, color: GOLD, fontWeight: 600 }}>✅ 完成 × {entry.completedCount}</div>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

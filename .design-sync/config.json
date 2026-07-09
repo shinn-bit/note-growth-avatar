@@ -1,0 +1,13 @@
+{
+  "projectId": "c40f161c-98bc-4bb6-b8f9-dd84d34213a4",
+  "shape": "package",
+  "pkg": "note-tree-ui",
+  "globalName": "NoteTreeUI",
+  "srcDir": "app/components/ui",
+  "cssEntry": "app/globals.css",
+  "tsconfig": "tsconfig.json",
+  "readmeHeader": ".design-sync/conventions.md",
+  "componentSrcMap": {
+    "IconButton": null
+  }
+}

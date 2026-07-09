@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "../lib/deviceId";
+import { BG, GREEN, DARK } from "../lib/theme";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const DARK  = "#1A1A18";
 
 type Preset = { label: string; freqTimes: number; freqDays: number };
 

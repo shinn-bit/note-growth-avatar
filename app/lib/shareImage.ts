@@ -1,8 +1,7 @@
+import { BG, DARK, GREEN, GOLD } from "./theme";
+
 const BG_TOP = "#F3ECDF";
-const BG_BOTTOM = "#EAE3D6";
-const DARK = "#1A1A18";
-const GREEN = "#3D7A50";
-const GOLD = "#C4922A";
+const BG_BOTTOM = BG;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {

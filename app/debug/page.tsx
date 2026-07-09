@@ -3,24 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "../lib/deviceId";
+import { BG, GREEN, GOLD, DARK, RED } from "../lib/theme";
+import { PLANT_NAMES, getMaxStage, getPlantImageSrc } from "../lib/plant";
+import { StageProgress } from "../components/ui/StageProgress";
+import { Card } from "../components/ui/Card";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const GOLD  = "#C4922A";
-const DARK  = "#1A1A18";
-const RED   = "#C04030";
-
-const PLANT_NAMES = ["ふじの木", "植物A", "植物B", "植物C", "植物D", "植物E", "植物F"];
-
-function getPlantImageSrc(plantType: number, stage: number): string {
-  if (plantType === 0) {
-    const names = ["stage1_normal", "stage2_normal", "stage3_normal", "stage4_normal", "stage5_normal"];
-    return `/avatars/${names[Math.min(stage - 1, 4)]}.png`;
-  }
-  return `/avatars/${plantType}-${Math.min(stage, 5)}.png`;
-}
 
 type PlantState = {
   streak: number;
@@ -75,7 +63,7 @@ export default function DebugPage() {
         if (d.completedPlantType !== null) {
           addLog(`🎉 植物完成！ type${d.completedPlantType} → ガチャ → type${d.newPlantType} (${PLANT_NAMES[d.newPlantType]})`);
         } else {
-          addLog(`✅ stage進行: type=${d.state?.currentPlantType} stage=${d.state?.currentPlantStage}/5  streak=${d.state?.streak}`);
+          addLog(`✅ stage進行: type=${d.state?.currentPlantType} stage=${d.state?.currentPlantStage}/${getMaxStage(d.state?.currentPlantType ?? 0)}  streak=${d.state?.streak}`);
         }
         if (d.state) setState(d.state);
       } catch (e) {
@@ -112,7 +100,7 @@ export default function DebugPage() {
       </div>
 
       {/* Current state */}
-      <div style={{ background: "rgba(255,255,255,0.85)", borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
+      <Card background="rgba(255,255,255,0.85)" padding={16} style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 10, color: "#9A9080", fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>CURRENT STATE</div>
         {s ? (
           <>
@@ -122,24 +110,20 @@ export default function DebugPage() {
               </div>
               <div style={{ fontFamily: "monospace", fontSize: 13, lineHeight: 1.8, color: DARK }}>
                 <div><b style={{ color: GOLD }}>{PLANT_NAMES[s.currentPlantType]}</b></div>
-                <div>type: {s.currentPlantType} · stage: <b>{s.currentPlantStage}</b>/5</div>
+                <div>type: {s.currentPlantType} · stage: <b>{s.currentPlantStage}</b>/{getMaxStage(s.currentPlantType)}</div>
                 <div>streak: {s.streak}</div>
                 <div style={{ fontSize: 11, color: "#9A9080" }}>lastPost: {s.lastPostDate ?? "なし"}</div>
                 <div style={{ fontSize: 11, color: "#9A9080" }}>completed: [{s.completedPlants.join(", ")}]</div>
               </div>
             </div>
             {/* Stage progress dots */}
-            <div style={{ display: "flex", gap: 6 }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} style={{ flex: 1, height: 8, borderRadius: 4, background: i + 1 <= s.currentPlantStage ? GREEN : "#C8C0B0", transition: "all 0.3s" }} />
-              ))}
-            </div>
-            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 4, textAlign: "right" }}>ステージ {s.currentPlantStage}/5</div>
+            <StageProgress stage={s.currentPlantStage} maxStage={getMaxStage(s.currentPlantType)} variant="bars" />
+            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 4, textAlign: "right" }}>ステージ {s.currentPlantStage}/{getMaxStage(s.currentPlantType)}</div>
           </>
         ) : (
           <div style={{ fontSize: 13, color: "#9A9080" }}>読み込み中...</div>
         )}
-      </div>
+      </Card>
 
       {/* Action buttons */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
@@ -177,10 +161,10 @@ export default function DebugPage() {
       </div>
 
       {/* All plant type previews */}
-      <div style={{ background: "rgba(255,255,255,0.85)", borderRadius: 18, padding: 16, marginBottom: 14, boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
+      <Card background="rgba(255,255,255,0.85)" padding={16} style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 10, color: "#9A9080", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>ALL PLANT TYPES (stage 1)</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-          {[0, 1, 2, 3, 4, 5, 6].map(t => (
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(t => (
             <div key={t} style={{ textAlign: "center" }}>
               <div style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", background: BG, border: t === s?.currentPlantType ? `2px solid ${GREEN}` : "1.5px solid rgba(200,192,176,0.5)" }}>
                 <img src={getPlantImageSrc(t, 1)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
@@ -189,7 +173,7 @@ export default function DebugPage() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Log */}
       <div style={{ background: "rgba(0,0,0,0.06)", borderRadius: 14, padding: 14 }}>

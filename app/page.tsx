@@ -5,24 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getDeviceId } from "./lib/deviceId";
 import { NotificationToggle } from "./components/NotificationToggle";
+import { BG, GREEN, GOLD, DARK } from "./lib/theme";
+import { PLANT_NAMES, getMaxStage, getPlantImageSrc } from "./lib/plant";
+import { FullScreenLoader } from "./components/ui/LoadingDots";
+import { StageProgress } from "./components/ui/StageProgress";
+import { StatTile } from "./components/ui/StatTile";
+import { IconButton } from "./components/ui/IconButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const BG    = "#EAE3D6";
-const GREEN = "#3D7A50";
-const GOLD  = "#C4922A";
-const DARK  = "#1A1A18";
-
-// Plant type 0 uses existing stage images; types 1-6 use {type}-{stage}.png
-function getPlantImageSrc(plantType: number, stage: number): string {
-  if (plantType === 0) {
-    const stageNames = ["stage1_normal", "stage2_normal", "stage3_normal", "stage4_normal", "stage5_normal"];
-    return `/avatars/${stageNames[Math.min(stage - 1, 4)]}.png`;
-  }
-  return `/avatars/${plantType}-${Math.min(stage, 5)}.png`;
-}
-
-const PLANT_NAMES = ["ふじの木", "植物A", "植物B", "植物C", "植物D", "植物E", "植物F"];
+// Redesign v2 (Claude Design sync: app-redesign-v2) — gacha only (home screen reverted)
+const NT_GREEN = "#2E5B3E";
 
 type PlantState = {
   streak: number;
@@ -85,14 +78,16 @@ function GreenBtn({ label, onClick, disabled = false }: {
 }
 
 function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () => void }) {
-  const [phase, setPhase] = useState<"complete" | "gacha" | "reveal">("complete");
+  const [phase, setPhase] = useState<"complete" | "opening" | "reveal">("complete");
+  const [flash, setFlash] = useState(false);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("gacha"), 2000);
-    const t2 = setTimeout(() => setPhase("reveal"), 3600);
-    const t3 = setTimeout(onDone, 6000);
+    const t1 = setTimeout(() => setPhase("opening"), 2000);
+    const t2 = setTimeout(() => { setFlash(true); setPhase("reveal"); }, 3700);
+    const t3 = setTimeout(() => setFlash(false), 4300);
+    // reveal phase waits indefinitely for the user to press 育てはじめる — no auto-advance
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone]);
+  }, []);
 
   return (
     <div style={{
@@ -106,15 +101,19 @@ function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () => void
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         padding: "28px", textAlign: "center",
-        position: "relative",
+        position: "relative", overflow: "hidden",
       }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 38%, rgba(196,146,42,0.18), transparent 42%)", pointerEvents: "none" }} />
+
+        {flash && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 6, background: "radial-gradient(circle at 50% 58%, rgba(255,248,225,.98) 0%, rgba(238,214,150,.9) 45%, rgba(217,172,75,.5) 100%)", animation: "nt-flash 0.6s ease-out both", pointerEvents: "none" }} />
+        )}
 
         {phase === "complete" && (
           <>
             <div style={{ fontSize: 48, marginBottom: 16, animation: "scaleIn 0.4s ease" }}>🎉</div>
             <div style={{ width: 200, height: 200, borderRadius: 24, overflow: "hidden", border: `2px solid ${GOLD}`, background: BG, boxShadow: "0 0 40px rgba(196,146,42,0.4)", animation: "scaleIn 0.4s ease", marginBottom: 20 }}>
-              <img src={getPlantImageSrc(gacha.completedPlantType, 5)} alt="completed" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <img src={getPlantImageSrc(gacha.completedPlantType, getMaxStage(gacha.completedPlantType))} alt="completed" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
             <div style={{ fontSize: 28, fontWeight: 800, color: DARK, animation: "fadeInUp 0.45s ease" }}>
               {PLANT_NAMES[gacha.completedPlantType]}が完成！
@@ -125,39 +124,49 @@ function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () => void
           </>
         )}
 
-        {phase === "gacha" && (
+        {phase === "opening" && (
           <>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#6A7068", marginBottom: 20 }}>次の植物は…</div>
-            <div style={{ width: 120, height: 120, borderRadius: 20, background: "rgba(61,122,80,0.1)", border: `2px dashed ${GREEN}`, display: "flex", alignItems: "center", justifyContent: "center", animation: "shimmerDot 0.8s ease-in-out infinite", marginBottom: 20 }}>
-              <div style={{ fontSize: 40, animation: "spin 0.6s linear infinite" }}>🌿</div>
+            <div style={{ position: "relative", display: "grid", placeItems: "center", width: 260, height: 240 }}>
+              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px solid rgba(217,172,75,.55)", animation: "nt-ripple 1.4s ease-out infinite" }} />
+              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px solid rgba(217,172,75,.4)", animation: "nt-ripple 1.4s ease-out 0.45s infinite" }} />
+              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1px dashed rgba(217,172,75,.35)", animation: "nt-ripple 1.4s ease-out 0.9s infinite" }} />
+              <div style={{ position: "absolute", bottom: 22, width: 160, height: 40, borderRadius: "50%", background: "radial-gradient(ellipse at 50% 32%, #8A6B42 0%, #6E5433 55%, rgba(110,84,51,0) 80%)", animation: "nt-glowmound 1s ease-in-out infinite" }} />
+              <div style={{ position: "absolute", bottom: 60, left: 76, width: 5, height: 5, borderRadius: "50%", background: "rgba(217,172,75,.9)", animation: "nt-mote 1.6s ease-out 0.2s infinite" }} />
+              <div style={{ position: "absolute", bottom: 66, left: 172, width: 4, height: 4, borderRadius: "50%", background: "rgba(255,250,235,.95)", animation: "nt-mote 1.4s ease-out 0.7s infinite" }} />
+              <div style={{ position: "absolute", bottom: 56, left: 144, width: 6, height: 6, borderRadius: "50%", background: "rgba(217,172,75,.75)", animation: "nt-mote 1.8s ease-out 1s infinite" }} />
+              <div style={{ animation: "nt-shake 0.5s ease-in-out infinite", position: "relative", marginBottom: 26, width: 84, height: 104, borderRadius: 42, background: "linear-gradient(165deg, #FFFCF0 0%, #E0D2B2 100%)", boxShadow: "0 0 60px 16px rgba(217,172,75,.75), 0 14px 28px rgba(90,70,35,.3)" }}>
+                <div style={{ position: "absolute", top: 44, left: -4, right: -4, height: 12, borderRadius: 6, background: "linear-gradient(180deg, #D9AC4B, #A87B1E)" }} />
+              </div>
             </div>
-            <div style={{ fontSize: 16, color: "#9A9080" }}>ガチャ中...</div>
+            <div style={{ fontFamily: "var(--font-shippori), serif", fontSize: 15, color: "#4A443A", letterSpacing: 1 }}>殻がゆっくり、ほどけていく——</div>
           </>
         )}
 
         {phase === "reveal" && (
-          <>
-            <div style={{ fontSize: 18, fontWeight: 700, color: GOLD, marginBottom: 16, animation: "fadeInUp 0.4s ease" }}>
+          <div style={{ animation: "nt-rise 0.7s cubic-bezier(.2,.9,.3,1.2) both", position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ position: "absolute", top: -6, width: 300, height: 300, borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(217,172,75,.2) 0deg 12deg, rgba(217,172,75,0) 12deg 28deg)", WebkitMaskImage: "radial-gradient(circle, black 28%, transparent 66%)", maskImage: "radial-gradient(circle, black 28%, transparent 66%)", animation: "nt-rays 30s linear infinite", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: 0, left: 30, width: 12, height: 8, borderRadius: "60% 100% 60% 100%", background: "#D9AC4B", animation: "nt-petal 4.2s linear 0.2s infinite", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: -8, left: 120, width: 10, height: 7, borderRadius: "100% 60% 100% 60%", background: "#E8CFA0", animation: "nt-petal 5s linear 1.4s infinite", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: 4, left: 200, width: 11, height: 8, borderRadius: "60% 100% 60% 100%", background: "#9FB57E", animation: "nt-petal 4.6s linear 2.6s infinite", pointerEvents: "none" }} />
+            <div style={{ position: "relative", fontSize: 18, fontWeight: 700, color: GOLD, marginBottom: 4, animation: "fadeInUp 0.4s ease" }}>
               新しい植物が来た！
             </div>
-            <div style={{ width: 200, height: 200, borderRadius: 24, overflow: "hidden", border: `2px solid ${GREEN}`, background: BG, boxShadow: "0 0 40px rgba(61,122,80,0.3)", animation: "scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1)", marginBottom: 20 }}>
-              <img src={getPlantImageSrc(gacha.newPlantType, 1)} alt="new plant" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: DARK, animation: "fadeInUp 0.4s ease" }}>
+            <img src={getPlantImageSrc(gacha.newPlantType, 1)} alt="new plant" style={{ position: "relative", width: 240, height: 240, objectFit: "cover", display: "block", WebkitMaskImage: "radial-gradient(ellipse 62% 62% at 50% 52%, black 55%, transparent 76%)", maskImage: "radial-gradient(ellipse 62% 62% at 50% 52%, black 55%, transparent 76%)" }} />
+            <div style={{ position: "relative", fontFamily: "var(--font-shippori), serif", fontSize: 26, fontWeight: 700, color: DARK, marginTop: -4, animation: "fadeInUp 0.4s ease" }}>
               {PLANT_NAMES[gacha.newPlantType]}
             </div>
-            <div style={{ fontSize: 14, color: "#6A7068", marginTop: 8, marginBottom: 24, animation: "fadeInUp 0.4s 0.1s ease both" }}>
+            <div style={{ position: "relative", fontSize: 14, color: "#6A7068", marginTop: 8, marginBottom: 24, animation: "fadeInUp 0.4s 0.1s ease both" }}>
               ステージ1からスタート！
             </div>
             <button onClick={onDone} style={{
-              width: "100%", maxWidth: 280, height: 52, border: "none", borderRadius: 26,
-              background: GREEN, color: "white", fontSize: 15, fontWeight: 700,
-              boxShadow: "0 6px 22px rgba(61,122,80,0.35)", cursor: "pointer",
+              position: "relative", width: "100%", maxWidth: 280, height: 52, border: "none", borderRadius: 26,
+              background: `linear-gradient(180deg, ${NT_GREEN}, color-mix(in oklab, ${NT_GREEN} 82%, black))`, color: "#F3EDDD", fontSize: 15, fontWeight: 700,
+              boxShadow: "0 6px 22px rgba(45,80,55,.35)", cursor: "pointer",
               fontFamily: "var(--font-noto), sans-serif", animation: "fadeInUp 0.4s 0.2s ease both",
             }}>
               育てはじめる
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -335,13 +344,7 @@ export default function HomePage() {
   };
 
   if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", background: BG }}>
-        <div style={{ display: "flex", gap: 10 }}>
-          {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: GREEN, animation: `shimmerDot 1.2s ${i * 0.22}s ease-in-out infinite` }} />)}
-        </div>
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   const isDebug = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -375,26 +378,8 @@ export default function HomePage() {
                   🌿 今日投稿済み
                 </div>
               )}
-              {/* Gallery icon */}
-              <div style={{ position: "relative" }} className="tooltip-wrap">
-                <Link href="/gallery" style={{
-                  width: 32, height: 32, borderRadius: 16,
-                  background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 15, border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none",
-                }}>🌸</Link>
-                <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(26,26,24,0.85)", color: "white", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, whiteSpace: "nowrap", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s" }} className="tooltip">ギャラリー</div>
-              </div>
-              {/* History icon */}
-              <div style={{ position: "relative" }} className="tooltip-wrap">
-                <Link href="/history" style={{
-                  width: 32, height: 32, borderRadius: 16,
-                  background: "rgba(234,227,214,0.75)", backdropFilter: "blur(4px)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 15, border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none",
-                }}>📋</Link>
-                <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(26,26,24,0.85)", color: "white", fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 8, whiteSpace: "nowrap", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s" }} className="tooltip">投稿履歴</div>
-              </div>
+              <IconButton href="/gallery" icon="🌸" tooltip="ギャラリー" />
+              <IconButton href="/history" icon="📋" tooltip="投稿履歴" />
               <div ref={settingsRef} style={{ position: "relative" }}>
                 <div
                   onClick={() => setShowSettings(v => !v)}
@@ -423,35 +408,16 @@ export default function HomePage() {
 
         {/* Stage dots */}
         <div style={{ textAlign: "center", padding: "6px 0 14px" }}>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", marginBottom: 4 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: i + 1 === currentPlantStage ? 24 : 10,
-                  height: 10,
-                  borderRadius: 5,
-                  background: i + 1 <= currentPlantStage ? GREEN : "#C8C0B0",
-                  transition: "all 0.3s",
-                }}
-              />
-            ))}
+          <div style={{ marginBottom: 4 }}>
+            <StageProgress stage={currentPlantStage} maxStage={getMaxStage(currentPlantType)} />
           </div>
-          <div style={{ fontSize: 12, color: "#9A9080" }}>ステージ {currentPlantStage} / 5</div>
+          <div style={{ fontSize: 12, color: "#9A9080" }}>ステージ {currentPlantStage} / {getMaxStage(currentPlantType)}</div>
         </div>
 
         {/* Stats row */}
         <div style={{ display: "flex", gap: 10, margin: "0 20px 14px" }}>
-          <div style={{ flex: 1, background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
-            <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>STREAK</div>
-            <div style={{ fontSize: 34, fontWeight: 700, color: DARK, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{state?.streak ?? 0}</div>
-            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 2 }}>日連続</div>
-          </div>
-          <div style={{ flex: 1, background: "rgba(255,255,255,0.7)", borderRadius: 18, padding: "12px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)" }}>
-            <div style={{ fontSize: 10, color: "#A09080", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>COMPLETED</div>
-            <div style={{ fontSize: 34, fontWeight: 700, color: DARK, fontFamily: "var(--font-dm-serif), serif", lineHeight: 1 }}>{totalCompleted}</div>
-            <div style={{ fontSize: 11, color: "#9A9080", marginTop: 2 }}>植物完成</div>
-          </div>
+          <StatTile label="STREAK" value={state?.streak ?? 0} sublabel="日連続" />
+          <StatTile label="COMPLETED" value={totalCompleted} sublabel="植物完成" />
         </div>
 
         {/* Status banner */}
@@ -463,7 +429,7 @@ export default function HomePage() {
             </div>
             <div style={{ fontSize: 11, color: postedToday ? "#5A8A6A" : "#A09080", marginTop: 3 }}>
               {postedToday
-                ? `ステージ${currentPlantStage}/5まで育った`
+                ? `ステージ${currentPlantStage}/${getMaxStage(currentPlantType)}まで育った`
                 : "投稿するたびに植物が育ちます"}
             </div>
           </div>
