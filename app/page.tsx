@@ -12,9 +12,10 @@ import { FullScreenLoader } from "./components/ui/LoadingDots";
 import { GachaOverlay, type GachaState } from "./components/GachaOverlay";
 import { GrowthOverlay, LightRain, type GrowthState } from "./components/GrowthOverlay";
 import { IconButton } from "./components/ui/IconButton";
-import { FlowerIcon, JournalIcon, SlidersIcon, LeafIcon, SproutIcon, BellIcon } from "./components/ui/icons";
+import { FlowerIcon, JournalIcon, SlidersIcon, LeafIcon, SproutIcon, BellIcon, SparkleIcon } from "./components/ui/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const PENDING_GACHA_KEY = "note_avatar_pending_gacha";
 
 type PlantState = {
   streak: number;
@@ -169,6 +170,7 @@ export default function HomePage() {
   const [imgKey, setImgKey] = useState(0);
   const [showPost, setShowPost] = useState(false);
   const [gacha, setGacha]   = useState<GachaState | null>(null);
+  const [pendingGacha, setPendingGacha] = useState<GachaState | null>(null);
   const [growth, setGrowth] = useState<GrowthState | null>(null);
   const [watering, setWatering] = useState(false);
   const [toast, setToast]   = useState<{ main: string; sub?: string } | null>(null);
@@ -186,6 +188,7 @@ export default function HomePage() {
         body: JSON.stringify({ deviceId }),
       });
       localStorage.removeItem("note_avatar_setup_done");
+      localStorage.removeItem(PENDING_GACHA_KEY);
       router.push("/setup");
     } finally { setResetting(false); }
   }
@@ -227,6 +230,10 @@ export default function HomePage() {
     const id = getDeviceId();
     setDeviceId(id);
     fetchAll(id);
+    try {
+      const raw = localStorage.getItem(PENDING_GACHA_KEY);
+      if (raw) setPendingGacha(JSON.parse(raw));
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -251,7 +258,12 @@ export default function HomePage() {
       return;
     }
     if (result.completedPlantType !== null && result.newPlantType !== null) {
-      setGacha({ completedPlantType: result.completedPlantType!, newPlantType: result.newPlantType! });
+      // Plant finished — don't force the gacha yet. Let the home screen show the
+      // finished specimen at its final stage; the user opens the gacha themselves
+      // via the "次の種を見つける" CTA when they're ready to move on.
+      const pending: GachaState = { completedPlantType: result.completedPlantType, newPlantType: result.newPlantType };
+      setPendingGacha(pending);
+      try { localStorage.setItem(PENDING_GACHA_KEY, JSON.stringify(pending)); } catch {}
     } else if (result.state && result.state.currentPlantType === prevType && result.state.currentPlantStage > prevStage) {
       setGrowth({ plantType: prevType, fromStage: prevStage, toStage: result.state.currentPlantStage });
     } else if (result.state) {
@@ -262,8 +274,14 @@ export default function HomePage() {
     }
   };
 
+  const openPendingGacha = () => {
+    if (pendingGacha) setGacha(pendingGacha);
+  };
+
   const finishGacha = () => {
     setGacha(null);
+    setPendingGacha(null);
+    try { localStorage.removeItem(PENDING_GACHA_KEY); } catch {}
     if (deviceId) fetchAll(deviceId);
   };
 
@@ -272,12 +290,15 @@ export default function HomePage() {
   }
 
   const isDebug = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const currentPlantType = state?.currentPlantType ?? 0;
-  const currentPlantStage = state?.currentPlantStage ?? 1;
+  const totalCompleted = state?.completedPlants?.length ?? 0;
+  // While a finished plant awaits its gacha, keep showing that plant at its final
+  // stage instead of the freshly-rolled next one that already lives in `state`.
+  const currentPlantType = pendingGacha ? pendingGacha.completedPlantType : (state?.currentPlantType ?? 0);
   const maxStage = getMaxStage(currentPlantType);
+  const currentPlantStage = pendingGacha ? maxStage : (state?.currentPlantStage ?? 1);
   const imgSrc = getPlantImageSrc(currentPlantType, currentPlantStage);
   const postedToday = !isDebug && state?.lastPostDate === today;
-  const totalCompleted = state?.completedPlants?.length ?? 0;
+  const specimenNo = pendingGacha ? totalCompleted : totalCompleted + 1;
   const latestPost = posts[0] ?? null;
 
   return (
@@ -346,7 +367,7 @@ export default function HomePage() {
         {/* Specimen head */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", animation: "gx-fade-up 0.6s ease both" }}>
           <span style={{ fontFamily: "var(--font-shippori), serif", fontSize: 11, fontWeight: 600, color: "#CBA24A", letterSpacing: 3 }}>
-            標本 No.{totalCompleted + 1}
+            標本 No.{specimenNo}
           </span>
           <span style={{ fontSize: 11, color: PARCH_MUTED, letterSpacing: 1.5 }}>
             ステージ {currentPlantStage} / {maxStage}
@@ -431,7 +452,26 @@ export default function HomePage() {
 
         {/* CTA */}
         <div style={{ marginTop: "auto", paddingTop: 22, animation: "gx-fade-up 0.6s 0.48s ease both" }}>
-          {postedToday ? (
+          {pendingGacha ? (
+            <>
+              <div style={{ textAlign: "center", fontSize: 11, color: "#CBA24A", letterSpacing: 2, marginBottom: 10 }}>
+                この鉢は、満ちました
+              </div>
+              <div
+                onClick={openPendingGacha}
+                style={{
+                  height: 54, borderRadius: 27, cursor: "pointer", userSelect: "none",
+                  background: "linear-gradient(180deg, #E8CE93 0%, #CBA24A 100%)",
+                  color: "#2A2010", fontSize: 15, fontWeight: 700, letterSpacing: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.35), 0 0 26px rgba(203,162,74,0.4)",
+                  animation: "gx-gacha-pulse 2.2s ease-in-out infinite",
+                }}
+              >
+                <SparkleIcon size={16} color="#2A2010" /> 次の種を見つける
+              </div>
+            </>
+          ) : postedToday ? (
             <div style={{
               height: 54, borderRadius: 27, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               border: "1px solid rgba(239,232,212,0.25)", color: PARCH_MUTED, fontSize: 14, fontWeight: 600, letterSpacing: 1,
