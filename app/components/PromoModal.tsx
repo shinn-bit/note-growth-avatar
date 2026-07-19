@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { subscribePush, isPushSubscribed } from "../lib/push";
+import { BellIcon } from "./ui/icons";
 
 type Platform = "ios" | "other";
 
@@ -102,9 +103,9 @@ export function PromoModal({ deviceId }: Props) {
           {platform === "other" && (
             <button
               onClick={handleEnableNotification}
-              className="w-full bg-[#5a7a5a] hover:bg-[#4a6a4a] text-white font-bold py-3 rounded-xl text-sm transition-colors"
+              className="w-full bg-[#5a7a5a] hover:bg-[#4a6a4a] text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
             >
-              🔔 通知をONにする
+              <BellIcon size={15} color="white" strokeWidth={1.8} /> 通知をONにする
             </button>
           )}
           <button

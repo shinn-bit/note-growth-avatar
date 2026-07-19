@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SparkleIcon, CheckCircleIcon, JournalIcon } from "../components/ui/icons";
 
 type LastMessage = {
   message: string;
@@ -116,7 +117,7 @@ function EvolutionScreen({ msg, onDone }: { msg: LastMessage; onDone: () => void
 
       {/* タイトル */}
       <div className="text-3xl font-extrabold text-gray-800" style={show(2)}>
-        進化！🎉
+        進化！
       </div>
 
       {/* レベルバッジ */}
@@ -182,11 +183,15 @@ export default function ResultPage() {
     : msg.alreadySubmitted
     ? "bg-[#f5f0eb]"
     : "bg-green-50";
-  const icon = msg.isMilestone ? "🎉" : msg.alreadySubmitted ? "✅" : "📝";
+  const icon = msg.isMilestone
+    ? <SparkleIcon size={64} color="#C4922A" />
+    : msg.alreadySubmitted
+    ? <CheckCircleIcon size={64} color="#3D7A50" />
+    : <JournalIcon size={64} color="#5a7a5a" />;
 
   return (
     <main className={`flex flex-col items-center justify-center min-h-screen ${bgColor} px-4 gap-8`}>
-      <span className="text-7xl">{icon}</span>
+      <span className="flex items-center justify-center">{icon}</span>
       <p className="text-xl font-bold text-gray-800 text-center">{msg.message}</p>
       {msg.isMilestone && (
         <p className="text-sm text-yellow-600 font-medium">マイルストーン達成！</p>

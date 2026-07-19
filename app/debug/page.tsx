@@ -7,6 +7,8 @@ import { BG, GREEN, GOLD, DARK, RED } from "../lib/theme";
 import { PLANT_NAMES, getMaxStage, getPlantImageSrc } from "../lib/plant";
 import { StageProgress } from "../components/ui/StageProgress";
 import { Card } from "../components/ui/Card";
+import { GachaOverlay, type GachaState } from "../components/GachaOverlay";
+import { GrowthOverlay, type GrowthState } from "../components/GrowthOverlay";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -24,6 +26,8 @@ export default function DebugPage() {
   const [state, setState] = useState<PlantState | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [previewGacha, setPreviewGacha] = useState<GachaState | null>(null);
+  const [previewGrowth, setPreviewGrowth] = useState<GrowthState | null>(null);
 
   useEffect(() => {
     const id = getDeviceId();
@@ -160,6 +164,30 @@ export default function DebugPage() {
         ✅ debugMode=true で日付制限バイパス済み — 何回でも進めます
       </div>
 
+      {/* Gacha animation preview (no API) */}
+      <button
+        onClick={() => {
+          const completed = s?.currentPlantType ?? 0;
+          const candidates = [...Array(PLANT_NAMES.length).keys()].filter(t => t !== completed);
+          const next = candidates[Math.floor(Math.random() * candidates.length)];
+          setPreviewGacha({ completedPlantType: completed, newPlantType: next });
+        }}
+        style={{ width: "100%", padding: "14px 0", borderRadius: 14, border: `1.5px dashed ${GOLD}`, background: "rgba(196,146,42,0.08)", color: GOLD, fontWeight: 700, fontSize: 14, cursor: "pointer", marginBottom: 14 }}
+      >
+        🌙 ガチャ演出プレビュー（API送信なし）
+      </button>
+      <button
+        onClick={() => {
+          const type = s?.currentPlantType ?? 0;
+          const max = getMaxStage(type);
+          const from = Math.min(s?.currentPlantStage ?? 1, max - 1);
+          setPreviewGrowth({ plantType: type, fromStage: from, toStage: from + 1 });
+        }}
+        style={{ width: "100%", padding: "14px 0", borderRadius: 14, border: `1.5px dashed ${GREEN}`, background: "rgba(61,122,80,0.08)", color: GREEN, fontWeight: 700, fontSize: 14, cursor: "pointer", marginBottom: 14 }}
+      >
+        🌱 成長演出プレビュー（API送信なし）
+      </button>
+
       {/* All plant type previews */}
       <Card background="rgba(255,255,255,0.85)" padding={16} style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 10, color: "#9A9080", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>ALL PLANT TYPES (stage 1)</div>
@@ -183,6 +211,13 @@ export default function DebugPage() {
           <div key={i} style={{ fontSize: 12, color: i === 0 ? DARK : "#9A9080", marginBottom: 4, fontFamily: "monospace", wordBreak: "break-all" }}>{l}</div>
         ))}
       </div>
+
+      {previewGacha && (
+        <GachaOverlay gacha={previewGacha} onDone={() => setPreviewGacha(null)} />
+      )}
+      {previewGrowth && (
+        <GrowthOverlay growth={previewGrowth} onDone={() => setPreviewGrowth(null)} />
+      )}
     </div>
   );
 }

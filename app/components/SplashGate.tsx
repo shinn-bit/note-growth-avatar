@@ -92,7 +92,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
             <svg style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", opacity: 0.45 }} width="22" height="26" viewBox="0 0 28 32">
               <path d="M14 28 Q4 20 4 12 Q4 4 14 2 Q10 10 14 18 Q16 12 20 6 Q22 14 18 22 Z" fill="white" />
             </svg>
-            {isLast ? "はじめる 🌱" : "次へ →"}
+            {isLast ? "はじめる" : "次へ →"}
             <svg style={{ position: "absolute", right: 18, top: "50%", transform: "translateY(-50%) scaleX(-1)", opacity: 0.45 }} width="22" height="26" viewBox="0 0 28 32">
               <path d="M14 28 Q4 20 4 12 Q4 4 14 2 Q10 10 14 18 Q16 12 20 6 Q22 14 18 22 Z" fill="white" />
             </svg>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "../lib/deviceId";
-import { BG, GREEN, DARK } from "../lib/theme";
+import { SOIL_TOP, SOIL_BOTTOM, PARCHMENT, PARCH_MUTED, SOIL_GOLD, SOIL_LEAF, CREAM_BTN, CREAM_BTN_TEXT } from "../lib/theme";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -75,21 +75,24 @@ export default function SetupPage() {
   }
 
   return (
-    <div style={{ width: "100%", maxWidth: 390, margin: "0 auto", minHeight: "100dvh", background: BG, position: "relative", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 19, fontWeight: 700, color: DARK }}>通知の設定</div>
-        <div onClick={() => router.push("/")} style={{ width: 32, height: 32, borderRadius: 16, background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, color: "#8A9882" }}>✕</div>
+    <div style={{ width: "100%", maxWidth: 390, margin: "0 auto", minHeight: "100dvh", background: `linear-gradient(180deg, ${SOIL_TOP} 0%, ${SOIL_BOTTOM} 100%)`, position: "relative", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontFamily: "var(--font-shippori), serif", fontSize: 11, fontWeight: 600, color: SOIL_GOLD, letterSpacing: 3, marginBottom: 4 }}>設定</div>
+          <div style={{ fontFamily: "var(--font-shippori), serif", fontSize: 22, fontWeight: 600, color: PARCHMENT, letterSpacing: 2 }}>通知の設定</div>
+        </div>
+        <div onClick={() => router.push("/")} style={{ width: 30, height: 30, borderRadius: 15, background: "rgba(239,232,212,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 12, color: PARCH_MUTED }}>✕</div>
       </div>
 
       <div style={{ padding: "8px 24px 0" }}>
-        <p style={{ fontSize: 13, color: "#8A9080", lineHeight: 1.7, margin: "8px 0 0" }}>
+        <p style={{ fontSize: 13, color: PARCH_MUTED, lineHeight: 1.7, margin: "8px 0 0" }}>
           投稿のリマインド通知のペースを設定します。<br />
           植物の成長は投稿のたびに進みます。
         </p>
       </div>
 
-      <div style={{ padding: "24px 24px 0", flex: 1 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#A09080", letterSpacing: 1, marginBottom: 10 }}>NOTIFICATION PACE</div>
+      <div style={{ padding: "24px 24px 40px", flex: 1 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: PARCH_MUTED, letterSpacing: 2, marginBottom: 10 }}>通知のペース</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {PRESETS.map((p, i) => (
             <button
@@ -98,9 +101,9 @@ export default function SetupPage() {
               style={{
                 padding: "8px 16px",
                 borderRadius: 20,
-                border: `1.5px solid ${selectedPreset === i ? GREEN : "#C8C0B0"}`,
-                background: selectedPreset === i ? "rgba(61,122,80,0.1)" : "rgba(255,255,255,0.7)",
-                color: selectedPreset === i ? GREEN : "#6A7060",
+                border: `1.5px solid ${selectedPreset === i ? SOIL_LEAF : "rgba(239,232,212,0.25)"}`,
+                background: selectedPreset === i ? "rgba(159,190,138,0.14)" : "rgba(239,232,212,0.06)",
+                color: selectedPreset === i ? SOIL_LEAF : PARCH_MUTED,
                 fontSize: 13,
                 fontWeight: selectedPreset === i ? 700 : 500,
                 cursor: "pointer",
@@ -113,34 +116,34 @@ export default function SetupPage() {
           ))}
         </div>
 
-        <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 16, padding: "14px 16px", marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: "#9A9080", marginBottom: 8 }}>カスタム</div>
+        <div style={{ background: "rgba(239,232,212,0.06)", border: "1px solid rgba(239,232,212,0.12)", borderRadius: 16, padding: "14px 16px", marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: PARCH_MUTED, marginBottom: 8 }}>カスタム</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <select
               value={freqDays}
               onChange={e => handleCustomDays(Number(e.target.value))}
-              style={{ padding: "6px 10px", borderRadius: 10, border: "1.5px solid #C8C0B0", background: "white", fontSize: 14, color: DARK, cursor: "pointer" }}
+              style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid rgba(239,232,212,0.3)", background: "#33422B", fontSize: 14, color: PARCHMENT, cursor: "pointer" }}
             >
               {[1,2,3,4,5,6,7].map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-            <span style={{ fontSize: 14, color: DARK }}>日に</span>
+            <span style={{ fontSize: 14, color: PARCHMENT }}>日に</span>
             <select
               value={freqTimes}
               onChange={e => handleCustomTimes(Number(e.target.value))}
-              style={{ padding: "6px 10px", borderRadius: 10, border: "1.5px solid #C8C0B0", background: "white", fontSize: 14, color: DARK, cursor: "pointer" }}
+              style={{ padding: "6px 10px", borderRadius: 10, border: "1px solid rgba(239,232,212,0.3)", background: "#33422B", fontSize: 14, color: PARCHMENT, cursor: "pointer" }}
             >
               {Array.from({ length: freqDays }, (_, i) => i + 1).map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            <span style={{ fontSize: 14, color: DARK }}>回通知</span>
+            <span style={{ fontSize: 14, color: PARCHMENT }}>回通知</span>
           </div>
         </div>
 
-        <div style={{ background: "rgba(61,122,80,0.08)", borderRadius: 14, padding: "12px 16px", marginBottom: 24, fontSize: 14, fontWeight: 700, color: GREEN }}>
+        <div style={{ background: "rgba(159,190,138,0.12)", border: "1px solid rgba(159,190,138,0.25)", borderRadius: 14, padding: "12px 16px", marginBottom: 24, fontSize: 14, fontWeight: 700, color: SOIL_LEAF }}>
           設定: {freqSummary(freqTimes, freqDays)}
         </div>
 
         {error && (
-          <div style={{ background: "rgba(180,60,40,0.08)", border: "1px solid rgba(180,60,40,0.2)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#A04030", marginBottom: 16 }}>
+          <div style={{ background: "rgba(224,160,143,0.1)", border: "1px solid rgba(224,160,143,0.3)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#E0A08F", marginBottom: 16 }}>
             {error}
           </div>
         )}
@@ -149,12 +152,13 @@ export default function SetupPage() {
           onClick={handleSubmit}
           disabled={loading}
           style={{
-            width: "100%", height: 56, borderRadius: 28,
-            background: loading ? "#C0B8AE" : GREEN,
-            color: "white", border: "none",
-            fontSize: 16, fontWeight: 700,
+            width: "100%", height: 54, borderRadius: 27,
+            background: loading ? "rgba(239,232,212,0.12)" : CREAM_BTN,
+            color: loading ? "rgba(239,232,212,0.4)" : CREAM_BTN_TEXT,
+            border: "none",
+            fontSize: 15, fontWeight: 700, letterSpacing: 1,
             cursor: loading ? "default" : "pointer",
-            boxShadow: loading ? "none" : "0 6px 22px rgba(61,122,80,0.4)",
+            boxShadow: loading ? "none" : "0 4px 20px rgba(0,0,0,0.35), 0 0 24px rgba(239,232,212,0.12)",
             fontFamily: "var(--font-noto), sans-serif",
             transition: "all 0.25s",
           }}

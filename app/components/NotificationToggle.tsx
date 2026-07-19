@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { subscribePush, unsubscribePush, isPushSubscribed } from "../lib/push";
+import { BellIcon, BellOffIcon } from "./ui/icons";
 
 type Props = {
   deviceId: string;
@@ -52,8 +53,8 @@ export function NotificationToggle({ deviceId }: Props) {
 
   if (denied) {
     return (
-      <p className="text-xs text-gray-400 text-center">
-        🔕 通知はブラウザ設定からONにできます
+      <p className="text-xs text-gray-400 text-center flex items-center gap-1.5 justify-center">
+        <BellOffIcon size={13} /> 通知はブラウザ設定からONにできます
       </p>
     );
   }
@@ -64,7 +65,7 @@ export function NotificationToggle({ deviceId }: Props) {
       disabled={loading}
       className="flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-500 transition-colors disabled:opacity-50"
     >
-      <span>{subscribed ? "🔔" : "🔕"}</span>
+      <span style={{ display: "flex", alignItems: "center" }}>{subscribed ? <BellIcon size={15} color="#3D7A50" /> : <BellOffIcon size={15} />}</span>
       <span>{subscribed ? "通知ON（夜8時にリマインド）" : "通知をONにする"}</span>
     </button>
   );

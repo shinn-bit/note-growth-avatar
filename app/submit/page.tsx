@@ -166,7 +166,7 @@ export default function SubmitPage() {
                 transition: "all 0.25s", fontFamily: "var(--font-noto), sans-serif",
               }}
             >
-              {loading ? "記録中 …" : "記録する 🌱"}
+              {loading ? "記録中 …" : "記録する"}
             </button>
           </form>
         </div>
