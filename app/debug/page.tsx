@@ -28,6 +28,8 @@ export default function DebugPage() {
   const [busy, setBusy] = useState(false);
   const [previewGacha, setPreviewGacha] = useState<GachaState | null>(null);
   const [previewGrowth, setPreviewGrowth] = useState<GrowthState | null>(null);
+  const [selType, setSelType] = useState(0);
+  const [selStage, setSelStage] = useState(1);
 
   useEffect(() => {
     const id = getDeviceId();
@@ -94,6 +96,43 @@ export default function DebugPage() {
     }
   }
 
+  // Keep selectors synced to loaded state on first load
+  useEffect(() => {
+    if (state) {
+      setSelType(state.currentPlantType);
+      setSelStage(Math.min(state.currentPlantStage, getMaxStage(state.currentPlantType)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.currentPlantType, state?.currentPlantStage]);
+
+  // Clamp stage when the selected type changes (type 0 has 6 stages, others 5)
+  function onSelectType(t: number) {
+    setSelType(t);
+    setSelStage(prev => Math.min(prev, getMaxStage(t)));
+  }
+
+  async function applySet() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`${API_URL}/debug-set`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId, plantType: selType, plantStage: selStage }),
+      });
+      const d = await r.json();
+      if (d.ok && d.state) {
+        setState(d.state);
+        addLog(`🎯 セット: ${PLANT_NAMES[selType]} (type=${selType}) stage=${selStage}/${getMaxStage(selType)}`);
+      } else {
+        addLog(`❌ セット失敗: ${d.error ?? "unknown"}`);
+      }
+    } catch (e) {
+      addLog(`❌ セットエラー: ${e}`);
+    }
+    setBusy(false);
+  }
+
   const s = state;
 
   return (
@@ -127,6 +166,49 @@ export default function DebugPage() {
         ) : (
           <div style={{ fontSize: 13, color: "#9A9080" }}>読み込み中...</div>
         )}
+      </Card>
+
+      {/* Manual plant/stage selector */}
+      <Card background="rgba(255,255,255,0.85)" padding={16} style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 10, color: "#9A9080", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>植物・レベルを選ぶ</div>
+        <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 14 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 12, overflow: "hidden", border: `2px solid ${GOLD}`, flexShrink: 0, background: BG }}>
+            <img src={getPlantImageSrc(selType, selStage)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+            <label style={{ fontSize: 12, color: DARK, fontFamily: "monospace" }}>
+              植物
+              <select
+                value={selType}
+                onChange={e => onSelectType(Number(e.target.value))}
+                style={{ width: "100%", marginTop: 4, padding: "8px 10px", borderRadius: 10, border: "1.5px solid rgba(200,192,176,0.7)", background: "white", fontSize: 13, color: DARK }}
+              >
+                {PLANT_NAMES.map((name, t) => (
+                  <option key={t} value={t}>type {t} · {name}</option>
+                ))}
+              </select>
+            </label>
+            <label style={{ fontSize: 12, color: DARK, fontFamily: "monospace" }}>
+              レベル（ステージ）
+              <select
+                value={selStage}
+                onChange={e => setSelStage(Number(e.target.value))}
+                style={{ width: "100%", marginTop: 4, padding: "8px 10px", borderRadius: 10, border: "1.5px solid rgba(200,192,176,0.7)", background: "white", fontSize: 13, color: DARK }}
+              >
+                {Array.from({ length: getMaxStage(selType) }, (_, i) => i + 1).map(st => (
+                  <option key={st} value={st}>stage {st} / {getMaxStage(selType)}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+        <button
+          onClick={applySet}
+          disabled={busy}
+          style={{ width: "100%", padding: "14px 0", borderRadius: 14, border: "none", background: busy ? "#C0B8AE" : GOLD, color: "white", fontWeight: 700, fontSize: 15, cursor: busy ? "default" : "pointer" }}
+        >
+          {busy ? "処理中…" : "🎯 この状態にセット"}
+        </button>
       </Card>
 
       {/* Action buttons */}
@@ -193,8 +275,8 @@ export default function DebugPage() {
         <div style={{ fontSize: 10, color: "#9A9080", fontWeight: 700, letterSpacing: 1, marginBottom: 12 }}>ALL PLANT TYPES (stage 1)</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(t => (
-            <div key={t} style={{ textAlign: "center" }}>
-              <div style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", background: BG, border: t === s?.currentPlantType ? `2px solid ${GREEN}` : "1.5px solid rgba(200,192,176,0.5)" }}>
+            <div key={t} onClick={() => onSelectType(t)} style={{ textAlign: "center", cursor: "pointer" }}>
+              <div style={{ width: "100%", aspectRatio: "1", borderRadius: 10, overflow: "hidden", background: BG, border: t === selType ? `2px solid ${GOLD}` : t === s?.currentPlantType ? `2px solid ${GREEN}` : "1.5px solid rgba(200,192,176,0.5)" }}>
                 <img src={getPlantImageSrc(t, 1)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <div style={{ fontSize: 10, color: "#9A9080", marginTop: 3 }}>type {t}</div>
