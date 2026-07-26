@@ -176,7 +176,8 @@ export default function HomePage() {
   const [toast, setToast]   = useState<{ main: string; sub?: string } | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [today] = useState(getTodayJST);
+  const [today, setToday] = useState(getTodayJST);
+  const lastRefreshRef = useRef(0);
 
   async function handleReset() {
     if (!confirm("本当にリセットしますか？\nすべての進捗が消えます。")) return;
@@ -243,6 +244,29 @@ export default function HomePage() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // Keep the screen fresh when the tab is left open. Whenever the user comes back
+  // to this tab (switches back from note.com, unlocks the phone, etc.) we re-read
+  // "today" and re-fetch state/history so the record button and stats aren't stuck
+  // at whatever they were when the tab was first opened — no manual reload needed.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!deviceId) return;
+      const now = Date.now();
+      if (now - lastRefreshRef.current < 3000) return; // throttle focus+visibility double-fire
+      lastRefreshRef.current = now;
+      setToday(getTodayJST());
+      fetchAll(deviceId);
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId]);
 
   const handlePostSuccess = (result: SubmitResult) => {
     setShowPost(false);
