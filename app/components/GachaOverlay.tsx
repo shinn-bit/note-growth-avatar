@@ -45,7 +45,7 @@ function Motes({ count, tone }: { count: number; tone: "night" | "dawn" }) {
   );
 }
 
-export function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () => void }) {
+export function GachaOverlay({ gacha, onDone, onReveal }: { gacha: GachaState; onDone: () => void; onReveal?: () => void }) {
   const [phase, setPhase] = useState<"farewell" | "seed" | "reveal">("farewell");
   const [flash, setFlash] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -60,6 +60,17 @@ export function GachaOverlay({ gacha, onDone }: { gacha: GachaState; onDone: () 
     const t = setTimeout(() => setPhase("seed"), 3400);
     return () => clearTimeout(t);
   }, [phase]);
+
+  // Reaching the reveal = the new plant is committed. Notify the parent so it can
+  // clear the pending-gacha flag now; even if the user closes the app before
+  // tapping "育てはじめる", the home won't revert to the completed plant.
+  const revealedRef = useRef(false);
+  useEffect(() => {
+    if (phase === "reveal" && !revealedRef.current) {
+      revealedRef.current = true;
+      onReveal?.();
+    }
+  }, [phase, onReveal]);
 
   // Act 2: long-press charge loop
   useEffect(() => {

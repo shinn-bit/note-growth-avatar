@@ -302,6 +302,15 @@ export default function HomePage() {
     if (pendingGacha) setGacha(pendingGacha);
   };
 
+  // The gacha reveal has been reached — the new plant (already saved server-side)
+  // is now the current one. Clear the pending flag immediately so leaving mid-
+  // ceremony doesn't make the home revert to the finished plant. The overlay keeps
+  // running off its own `gacha` prop, so this doesn't interrupt the animation.
+  const commitGacha = () => {
+    setPendingGacha(null);
+    try { localStorage.removeItem(PENDING_GACHA_KEY); } catch {}
+  };
+
   const finishGacha = () => {
     setGacha(null);
     setPendingGacha(null);
@@ -528,7 +537,7 @@ export default function HomePage() {
       )}
 
       {gacha && (
-        <GachaOverlay gacha={gacha} onDone={finishGacha} />
+        <GachaOverlay gacha={gacha} onReveal={commitGacha} onDone={finishGacha} />
       )}
 
       {toast && (
